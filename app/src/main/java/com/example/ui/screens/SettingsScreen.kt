@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,8 +26,11 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
+import com.example.util.WebDavManager
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
@@ -116,6 +120,7 @@ fun SettingsScreen(
     // Backup view dialog
     var backupJsonDialogContent by remember { mutableStateOf<String?>(null) }
     var restoreJsonInput by remember { mutableStateOf<String?>(null) }
+    var showWhitepaperDialog by remember { mutableStateOf(false) }
 
     val totalAssetValue = remember(allItems) {
         allItems.mapNotNull { it.price }.sum()
@@ -156,19 +161,38 @@ fun SettingsScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Storage,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "本地资产库统计",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Storage,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "本地资产库统计",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = { showWhitepaperDialog = true },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MenuBook,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("软件使用白皮书", style = MaterialTheme.typography.labelMedium)
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
@@ -864,6 +888,60 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 坚果云等网盘快捷预设与防坑提示
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AssistChip(
+                            onClick = {
+                                webDavUrl = "https://dav.jianguoyun.com/dav/StoragePro/"
+                            },
+                            label = { Text("🚀 快捷填入: 坚果云 (Jianguoyun)") }
+                        )
+                        AssistChip(
+                            onClick = {
+                                webDavUrl = "https://your-nas-ip:5006/webdav/"
+                            },
+                            label = { Text("群晖 Synology NAS") }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val isJianguoyun = webDavUrl.contains("jianguoyun")
+                    if (isJianguoyun) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "💡 坚果云提示：请在「坚果云网页版 -> 账户信息 -> 高级设置 -> 添加应用密码」生成专用授权码填充至密码框。坚果云必须写入子文件夹，建议保持默认地址: https://dav.jianguoyun.com/dav/StoragePro/",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
                         value = webDavUrl,
                         onValueChange = { webDavUrl = it },
@@ -905,7 +983,9 @@ fun SettingsScreen(
                     ) {
                         OutlinedButton(
                             onClick = {
-                                val cfg = webDavConfig.copy(serverUrl = webDavUrl.trim(), username = webDavUser.trim(), password = webDavPass.trim())
+                                val formattedUrl = WebDavManager.formatServerUrl(webDavUrl)
+                                webDavUrl = formattedUrl
+                                val cfg = webDavConfig.copy(serverUrl = formattedUrl, username = webDavUser.trim(), password = webDavPass.trim())
                                 viewModel.updateWebDavConfig(cfg)
                                 viewModel.testWebDavConnection { _, _ -> }
                             },
@@ -916,7 +996,9 @@ fun SettingsScreen(
 
                         Button(
                             onClick = {
-                                val cfg = webDavConfig.copy(serverUrl = webDavUrl.trim(), username = webDavUser.trim(), password = webDavPass.trim())
+                                val formattedUrl = WebDavManager.formatServerUrl(webDavUrl)
+                                webDavUrl = formattedUrl
+                                val cfg = webDavConfig.copy(serverUrl = formattedUrl, username = webDavUser.trim(), password = webDavPass.trim())
                                 viewModel.updateWebDavConfig(cfg)
                                 viewModel.uploadToWebDav()
                             },
@@ -927,7 +1009,9 @@ fun SettingsScreen(
 
                         OutlinedButton(
                             onClick = {
-                                val cfg = webDavConfig.copy(serverUrl = webDavUrl.trim(), username = webDavUser.trim(), password = webDavPass.trim())
+                                val formattedUrl = WebDavManager.formatServerUrl(webDavUrl)
+                                webDavUrl = formattedUrl
+                                val cfg = webDavConfig.copy(serverUrl = formattedUrl, username = webDavUser.trim(), password = webDavPass.trim())
                                 viewModel.updateWebDavConfig(cfg)
                                 viewModel.downloadFromWebDav()
                             },
@@ -1192,6 +1276,12 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showWhitepaperDialog) {
+        com.example.ui.dialogs.AppWhitepaperDialog(
+            onDismiss = { showWhitepaperDialog = false }
+        )
     }
 }
 

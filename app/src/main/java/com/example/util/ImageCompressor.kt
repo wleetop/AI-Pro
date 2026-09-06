@@ -28,7 +28,7 @@ object ImageCompressor {
      * Guaranteed to never return HARDWARE bitmaps and never throw unhandled exceptions.
      */
     fun decodeUriToBitmap(context: Context, uri: Uri, maxDimension: Int = 1280): Bitmap? {
-        return try {
+        val decodedBmp = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val source = ImageDecoder.createSource(context.contentResolver, uri)
                 ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
@@ -74,6 +74,19 @@ object ImageCompressor {
             } catch (ignored: Throwable) {
                 null
             }
+        } ?: return null
+
+        val safeBmp = ensureSoftwareBitmap(decodedBmp)
+
+        // 读取 Exif 旋转标志，确保 Bitmap 方向与直观视觉 100% 正向对齐
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                val exif = ExifInterface(stream)
+                val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                rotateBitmapIfNeeded(safeBmp, orientation)
+            } ?: safeBmp
+        } catch (e: Throwable) {
+            safeBmp
         }
     }
 
@@ -161,21 +174,50 @@ object ImageCompressor {
             val height = safeSource.height
 
             val cropRect: Rect = if (boxNorm != null && boxNorm.size == 4) {
-                val ymin = (boxNorm[0] / 1000f * height).toInt().coerceIn(0, (height - 1).coerceAtLeast(0))
-                val xmin = (boxNorm[1] / 1000f * width).toInt().coerceIn(0, (width - 1).coerceAtLeast(0))
-                val ymax = (boxNorm[2] / 1000f * height).toInt().coerceIn(ymin + 1, height)
-                val xmax = (boxNorm[3] / 1000f * width).toInt().coerceIn(xmin + 1, width)
-                Rect(xmin, ymin, xmax, ymax)
-            } else if (totalItems > 1) {
-                // Divide grid heuristic if no bounding box
-                val cols = if (totalItems <= 2) 2 else if (totalItems <= 4) 2 else 3
-                val rows = (totalItems + cols - 1) / cols
-                val r = (itemIndex / cols).coerceIn(0, (rows - 1).coerceAtLeast(0))
-                val c = (itemIndex % cols).coerceIn(0, (cols - 1).coerceAtLeast(0))
-                val cellW = width / cols
-                val cellH = height / rows
-                Rect(c * cellW, r * cellH, ((c + 1) * cellW).coerceAtMost(width), ((r + 1) * cellH).coerceAtMost(height))
+                var rawYmin = (boxNorm[0] / 1000f * height).toInt()
+                var rawXmin = (boxNorm[1] / 1000f * width).toInt()
+                var rawYmax = (boxNorm[2] / 1000f * height).toInt()
+                var rawXmax = (boxNorm[3] / 1000f * width).toInt()
+
+                if (rawYmin > rawYmax) { val tmp = rawYmin; rawYmin = rawYmax; rawYmax = tmp }
+                if (rawXmin > rawXmax) { val tmp = rawXmin; rawXmin = rawXmax; rawXmax = tmp }
+
+                val boxW = (rawXmax - rawXmin).coerceAtLeast(1)
+                val boxH = (rawYmax - rawYmin).coerceAtLeast(1)
+
+                // 智能外扩 12% 缓冲区，防止边缘被裁剪
+                val padX = (boxW * 0.12f).toInt().coerceAtLeast(8)
+                val padY = (boxH * 0.12f).toInt().coerceAtLeast(8)
+
+                var paddedXmin = rawXmin - padX
+                var paddedXmax = rawXmax + padX
+                var paddedYmin = rawYmin - padY
+                var paddedYmax = rawYmax + padY
+
+                // 长宽比修正：极细长或极扁的框水平/垂直适度填充
+                val curW = paddedXmax - paddedXmin
+                val curH = paddedYmax - paddedYmin
+                val aspect = curW.toFloat() / curH.toFloat()
+                if (aspect < 0.5f) {
+                    val targetW = (curH * 0.75f).toInt()
+                    val diff = (targetW - curW) / 2
+                    paddedXmin -= diff
+                    paddedXmax += diff
+                } else if (aspect > 2.0f) {
+                    val targetH = (curW * 0.75f).toInt()
+                    val diff = (targetH - curH) / 2
+                    paddedYmin -= diff
+                    paddedYmax += diff
+                }
+
+                val finalXmin = paddedXmin.coerceIn(0, (width - 1).coerceAtLeast(0))
+                val finalYmin = paddedYmin.coerceIn(0, (height - 1).coerceAtLeast(0))
+                val finalXmax = paddedXmax.coerceIn(finalXmin + 1, width)
+                val finalYmax = paddedYmax.coerceIn(finalYmin + 1, height)
+
+                Rect(finalXmin, finalYmin, finalXmax, finalYmax)
             } else {
+                // 无坐标框时保留全家福主图，严禁盲目切成块导致截取墙面木纹
                 Rect(0, 0, width, height)
             }
 
@@ -187,6 +229,42 @@ object ImageCompressor {
             val croppedH = cropRect.height().coerceIn(1, maxAllowedH)
 
             val cropped = Bitmap.createBitmap(safeSource, safeX, safeY, croppedW, croppedH)
+            compressBitmapAndSave(context, cropped)
+        } catch (e: Throwable) {
+            compressBitmapAndSave(context, sourceBitmap)
+        }
+    }
+
+    /**
+     * 根据在全景图上点击的归一化中心点 (0.0..1.0)，实时以该点为中心智能裁切物品照片
+     */
+    suspend fun cropByCenterPoint(
+        context: Context,
+        sourceBitmap: Bitmap,
+        normalizedX: Float, // 0.0f .. 1.0f
+        normalizedY: Float, // 0.0f .. 1.0f
+        cropRadiusRatio: Float = 0.18f
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val safeSource = ensureSoftwareBitmap(sourceBitmap)
+            val width = safeSource.width
+            val height = safeSource.height
+
+            val centerX = (normalizedX * width).toInt()
+            val centerY = (normalizedY * height).toInt()
+
+            val halfW = (width * cropRadiusRatio).toInt().coerceAtLeast(60)
+            val halfH = (height * cropRadiusRatio).toInt().coerceAtLeast(60)
+
+            val xmin = (centerX - halfW).coerceIn(0, (width - 1).coerceAtLeast(0))
+            val ymin = (centerY - halfH).coerceIn(0, (height - 1).coerceAtLeast(0))
+            val xmax = (centerX + halfW).coerceIn(xmin + 1, width)
+            val ymax = (centerY + halfH).coerceIn(ymin + 1, height)
+
+            val croppedW = xmax - xmin
+            val croppedH = ymax - ymin
+
+            val cropped = Bitmap.createBitmap(safeSource, xmin, ymin, croppedW, croppedH)
             compressBitmapAndSave(context, cropped)
         } catch (e: Throwable) {
             compressBitmapAndSave(context, sourceBitmap)

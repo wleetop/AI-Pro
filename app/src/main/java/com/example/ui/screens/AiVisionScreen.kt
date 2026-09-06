@@ -14,9 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.util.ImageCompressor
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -26,12 +29,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +52,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.DynamicFeed
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Place
@@ -605,6 +615,7 @@ fun AiVisionScreen(
     batchReviewItems?.let { items ->
         ListPlusBatchReviewDialog(
             initialItems = items,
+            fullSourceBitmap = viewModel.lastBatchBitmap,
             allSpaces = allSpaces,
             allContainers = containers,
             onConfirm = { selectedItems ->
@@ -1015,6 +1026,7 @@ fun SingleItemReviewDialog(
 @Composable
 fun ListPlusBatchReviewDialog(
     initialItems: List<BatchRecognizedItem>,
+    fullSourceBitmap: Bitmap? = null,
     allSpaces: List<String> = emptyList(),
     allContainers: List<StorageContainer> = emptyList(),
     onConfirm: (List<BatchRecognizedItem>) -> Unit,
@@ -1032,6 +1044,25 @@ fun ListPlusBatchReviewDialog(
     var editingItem by remember { mutableStateOf<BatchRecognizedItem?>(null) }
     var selectedBatchContainer by remember { mutableStateOf<StorageContainer?>(null) }
     var batchContainerDropdownExpanded by remember { mutableStateOf(false) }
+    var locatingItemIndex by remember { mutableStateOf<Int?>(null) }
+
+    val dialogContext = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var photoReplacingItemId by remember { mutableStateOf<String?>(null) }
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null && photoReplacingItemId != null) {
+            val targetId = photoReplacingItemId!!
+            coroutineScope.launch {
+                val savedPath = ImageCompressor.compressAndSaveImage(dialogContext, uri)
+                val idx = itemsState.indexOfFirst { it.id == targetId }
+                if (idx >= 0) {
+                    itemsState[idx] = itemsState[idx].copy(imagePath = savedPath)
+                }
+            }
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -1069,6 +1100,133 @@ fun ListPlusBatchReviewDialog(
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
+
+                // 全景全家福交互画布 (支持点击直接一秒纠偏截图)
+                if (fullSourceBitmap != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (locatingItemIndex != null)
+                                    "👉 请在下方原图点击「${itemsState[locatingItemIndex!!].name}」的准确中心点"
+                                else "📷 原图全景视角 (图片截偏了？点击下方 [🎯定位] 即可在图上点按重裁):",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (locatingItemIndex != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (locatingItemIndex != null) {
+                                TextButton(
+                                    onClick = { locatingItemIndex = null },
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text("取消定位", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        BoxWithConstraints(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black)
+                                .border(
+                                    width = if (locatingItemIndex != null) 2.dp else 1.dp,
+                                    color = if (locatingItemIndex != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                        ) {
+                            val containerWidth = constraints.maxWidth.toFloat()
+                            val containerHeight = constraints.maxHeight.toFloat()
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .pointerInput(locatingItemIndex) {
+                                        detectTapGestures { offset ->
+                                            val idx = locatingItemIndex
+                                            if (idx != null && idx in itemsState.indices && fullSourceBitmap != null) {
+                                                val normX = (offset.x / containerWidth).coerceIn(0.05f, 0.95f)
+                                                val normY = (offset.y / containerHeight).coerceIn(0.05f, 0.95f)
+
+                                                coroutineScope.launch {
+                                                    val newPath = ImageCompressor.cropByCenterPoint(
+                                                        context = dialogContext,
+                                                        sourceBitmap = fullSourceBitmap,
+                                                        normalizedX = normX,
+                                                        normalizedY = normY
+                                                    )
+                                                    val boxYmin = ((normY - 0.12f) * 1000).toInt().coerceIn(0, 1000)
+                                                    val boxXmin = ((normX - 0.12f) * 1000).toInt().coerceIn(0, 1000)
+                                                    val boxYmax = ((normY + 0.12f) * 1000).toInt().coerceIn(boxYmin + 1, 1000)
+                                                    val boxXmax = ((normX + 0.12f) * 1000).toInt().coerceIn(boxXmin + 1, 1000)
+
+                                                    itemsState[idx] = itemsState[idx].copy(
+                                                        imagePath = newPath,
+                                                        boxNorm = listOf(boxYmin, boxXmin, boxYmax, boxXmax)
+                                                    )
+                                                    locatingItemIndex = null
+                                                }
+                                            }
+                                        }
+                                    }
+                            ) {
+                                AsyncImage(
+                                    model = fullSourceBitmap,
+                                    contentDescription = "全景参照图",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+
+                                // 绘制各物品在全景图上的数字标定点 Pin
+                                itemsState.forEachIndexed { i, item ->
+                                    val box = item.boxNorm
+                                    if (box != null && box.size == 4) {
+                                        val cxNorm = (box[1] + box[3]) / 2000f
+                                        val cyNorm = (box[0] + box[2]) / 2000f
+                                        val isTarget = locatingItemIndex == i
+
+                                        val density = LocalDensity.current
+                                        val pxX = (containerWidth * cxNorm)
+                                        val pxY = (containerHeight * cyNorm)
+                                        val dpX = with(density) { pxX.toDp() } - 12.dp
+                                        val dpY = with(density) { pxY.toDp() } - 12.dp
+
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = if (isTarget) MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.75f),
+                                            border = BorderStroke(1.5.dp, Color.White),
+                                            modifier = Modifier
+                                                .offset(x = dpX, y = dpY)
+                                                .size(24.dp)
+                                                .clickable {
+                                                    locatingItemIndex = i
+                                                }
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = "${i + 1}",
+                                                    color = Color.White,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // 空间快速管理与空间箱指派
                 Surface(
@@ -1234,7 +1392,7 @@ fun ListPlusBatchReviewDialog(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(itemsState) { item ->
+                    itemsIndexed(itemsState) { index, item ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -1260,12 +1418,20 @@ fun ListPlusBatchReviewDialog(
 
                                 Spacer(modifier = Modifier.width(6.dp))
 
-                                // Item Cropped Thumbnail Display
+                                // Item Cropped Thumbnail Display with Tap-to-Replace
                                 Box(
                                     modifier = Modifier
                                         .size(54.dp)
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .clickable {
+                                            photoReplacingItemId = item.id
+                                            photoPickerLauncher.launch(
+                                                androidx.activity.result.PickVisualMediaRequest(
+                                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                )
+                                            )
+                                        },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (item.imagePath != null && File(item.imagePath!!).exists()) {
@@ -1275,10 +1441,26 @@ fun ListPlusBatchReviewDialog(
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                         )
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .background(
+                                                    Color.Black.copy(alpha = 0.5f),
+                                                    RoundedCornerShape(topStart = 6.dp)
+                                                )
+                                                .padding(2.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Edit,
+                                                contentDescription = "更换照片",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(10.dp)
+                                            )
+                                        }
                                     } else {
                                         Icon(
                                             Icons.Default.CameraAlt,
-                                            contentDescription = null,
+                                            contentDescription = "更换照片",
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                             modifier = Modifier.size(24.dp)
                                         )
@@ -1295,13 +1477,14 @@ fun ListPlusBatchReviewDialog(
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
-                                            text = item.name,
+                                            text = "${index + 1}. ${item.name}",
                                             fontWeight = FontWeight.Bold,
                                             style = MaterialTheme.typography.bodyMedium,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier.weight(1f)
                                         )
+                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "x${item.quantity}${item.unit}",
                                             style = MaterialTheme.typography.labelSmall,
@@ -1311,24 +1494,55 @@ fun ListPlusBatchReviewDialog(
                                     }
 
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = "分类: ${item.category}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        if (item.containerName != null) {
-                                            Spacer(modifier = Modifier.width(6.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f, fill = false)
+                                        ) {
+                                            Text(
+                                                text = "分类: ${item.category}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            if (item.containerName != null) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = MaterialTheme.colorScheme.secondaryContainer
+                                                ) {
+                                                    Text(
+                                                        text = "📦 ${item.containerName}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        if (fullSourceBitmap != null) {
                                             Surface(
-                                                shape = RoundedCornerShape(4.dp),
-                                                color = MaterialTheme.colorScheme.secondaryContainer
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = if (locatingItemIndex == index) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                                modifier = Modifier.clickable {
+                                                    locatingItemIndex = if (locatingItemIndex == index) null else index
+                                                }
                                             ) {
-                                                Text(
-                                                    text = "📦 ${item.containerName}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                                )
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = if (locatingItemIndex == index) "🎯重裁中" else "🎯定位",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = if (locatingItemIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                }
                                             }
                                         }
                                     }

@@ -414,6 +414,31 @@ class UniversalAiVisionService(private val context: Context) {
         return target
     }
 
+    /**
+     * 智能修复大模型返回的非标准或格式缺失 JSON (例如缺失 box 字段左中括号 "[" 等问题)
+     */
+    private fun repairJsonText(json: String): String {
+        var s = json
+        // 修复 1: "box": 529, 43, 1056, 456] -> "box": [529, 43, 1056, 456]
+        s = s.replace(Regex("(?i)\"box\"\\s*:\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\]")) { match ->
+            val (v0, v1, v2, v3) = match.destructured
+            "\"box\":[$v0,$v1,$v2,$v3]"
+        }
+        // 修复 2: "box": [529, 43, 1056, 456 (缺少末尾 ])
+        s = s.replace(Regex("(?i)\"box\"\\s*:\\s*\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)(?!\\d|\\])")) { match ->
+            val (v0, v1, v2, v3) = match.destructured
+            "\"box\":[$v0,$v1,$v2,$v3]"
+        }
+        // 修复 3: "box": 529, 43, 1056, 456 (完全没有括号，后面跟逗号或右大括号)
+        s = s.replace(Regex("(?i)\"box\"\\s*:\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)(?=[,\\}\\s])")) { match ->
+            val (v0, v1, v2, v3) = match.destructured
+            "\"box\":[$v0,$v1,$v2,$v3]"
+        }
+        // 修复 4: 移除数组或对象末尾多余的逗号, 如 [1,2,3,] -> [1,2,3]
+        s = s.replace(Regex(",\\s*([\\]\\}])"), "$1")
+        return s
+    }
+
     // 1. 单件物品拍照识别
     suspend fun recognizeSingleItem(bitmap: Bitmap): Result<SingleItemRecognitionResult> = withContext(Dispatchers.Default) {
         val config = loadConfig()
@@ -451,7 +476,7 @@ class UniversalAiVisionService(private val context: Context) {
         }
 
         try {
-            val jsonText = extractJson(rawResult.getOrThrow())
+            val jsonText = repairJsonText(extractJson(rawResult.getOrThrow()))
             val obj = JSONObject(jsonText)
             val tagsArray = obj.optJSONArray("tags")
             val tags = mutableListOf<String>()
@@ -519,7 +544,7 @@ class UniversalAiVisionService(private val context: Context) {
         }
 
         try {
-            val jsonText = extractJson(rawResult.getOrThrow())
+            val jsonText = repairJsonText(extractJson(rawResult.getOrThrow()))
             val obj = JSONObject(jsonText)
             val tagsArray = obj.optJSONArray("tags")
             val tags = mutableListOf<String>()
@@ -560,7 +585,10 @@ class UniversalAiVisionService(private val context: Context) {
         val prompt = """
             请识别并拆解画面中所有可见的独立物品，仅输出紧凑JSON数组(不要任何多余说明或markdown):
             [{"name":"品名","category":"日常居家","suggestedLocation":"推荐位置","quantity":1,"unit":"件","tags":["特征"],"box":[ymin,xmin,ymax,xmax]}]
-            说明: box为物品在图片中的归一化边界坐标(0-1000整数)，必须包含物品边界，用于精确裁切物品独立照片。
+            精确定位要求:
+            1. box必须是带有中括号[]的4元整数数组 [ymin, xmin, ymax, xmax]，取值 0-1000 整数。绝对禁止遗漏中括号 []！
+            2. box 必须紧密包裹该物品的真实物理外观边界，绝对不能包含周边大面积的桌台、墙面或地面背景！
+            3. 不要把背景家具（如台面、桌面、净化器顶）识别为独立收纳物品，仅识别放置在其上的独立物品。
             分类选其一:电子数码|日常居家|服饰箱包|食品饮料|药品个护|户外露营|重要证件|美妆护肤|工具五金|文具书籍
         """.trimIndent()
 
@@ -584,39 +612,69 @@ class UniversalAiVisionService(private val context: Context) {
         }
 
         try {
-            val jsonText = extractJson(rawResult.getOrThrow())
-            val array = JSONArray(jsonText)
+            val rawString = rawResult.getOrThrow()
+            val extractedJson = extractJson(rawString)
+            val cleanJsonText = repairJsonText(extractedJson)
             val list = mutableListOf<BatchRecognizedItem>()
 
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                val tagsArray = obj.optJSONArray("tags")
-                val tags = mutableListOf<String>()
-                if (tagsArray != null) {
-                    for (t in 0 until tagsArray.length()) {
-                        tags.add(tagsArray.getString(t))
-                    }
+            // 优先尝试标准的 JSONArray 解析
+            val array = try {
+                JSONArray(cleanJsonText)
+            } catch (e: Exception) {
+                // 如果标准 JSONArray 仍然由于局部格式损坏解析失败，使用正则表达式提取单个 JSONObject 兜底
+                val objectMatches = Regex("\\{[^{}]*\"name\"[^{}]*\\}").findAll(rawString)
+                val fallbackArray = JSONArray()
+                for (m in objectMatches) {
+                    try {
+                        val repairedObjStr = repairJsonText(m.value)
+                        fallbackArray.put(JSONObject(repairedObjStr))
+                    } catch (_: Exception) {}
                 }
-                val boxArray = obj.optJSONArray("box")
-                val boxNorm = if (boxArray != null && boxArray.length() == 4) {
-                    listOf(boxArray.getInt(0), boxArray.getInt(1), boxArray.getInt(2), boxArray.getInt(3))
-                } else null
-
-                list.add(
-                    BatchRecognizedItem(
-                        id = UUID.randomUUID().toString(),
-                        name = obj.optString("name", "物品 ${i + 1}"),
-                        category = obj.optString("category", "日常居家"),
-                        suggestedLocation = obj.optString("suggestedLocation", "默认收纳箱"),
-                        quantity = obj.optInt("quantity", 1),
-                        unit = obj.optString("unit", "件"),
-                        tags = tags,
-                        isSelected = true,
-                        boxNorm = boxNorm
-                    )
-                )
+                if (fallbackArray.length() > 0) {
+                    fallbackArray
+                } else {
+                    throw e
+                }
             }
-            Result.success(list)
+
+            for (i in 0 until array.length()) {
+                try {
+                    val obj = array.getJSONObject(i)
+                    val tagsArray = obj.optJSONArray("tags")
+                    val tags = mutableListOf<String>()
+                    if (tagsArray != null) {
+                        for (t in 0 until tagsArray.length()) {
+                            tags.add(tagsArray.getString(t))
+                        }
+                    }
+                    val boxObj = obj.opt("box")
+                    val boxNorm = parseBoxCoordinates(boxObj)
+
+                    list.add(
+                        BatchRecognizedItem(
+                            id = UUID.randomUUID().toString(),
+                            name = obj.optString("name", "物品 ${i + 1}"),
+                            category = obj.optString("category", "日常居家"),
+                            suggestedLocation = obj.optString("suggestedLocation", "默认收纳箱"),
+                            quantity = obj.optInt("quantity", 1),
+                            unit = obj.optString("unit", "件"),
+                            tags = tags,
+                            isSelected = true,
+                            boxNorm = boxNorm
+                        )
+                    )
+                } catch (_: Exception) {}
+            }
+
+            if (list.isNotEmpty()) {
+                Result.success(list)
+            } else {
+                if (config.autoFallbackToLocal) {
+                    Result.success(LocalHeuristicEngine.recognizeBatchListPlus())
+                } else {
+                    Result.failure(Exception("未能从云端回应中提取出有效物品"))
+                }
+            }
         } catch (e: Exception) {
             if (config.autoFallbackToLocal) {
                 Result.success(LocalHeuristicEngine.recognizeBatchListPlus())
@@ -732,7 +790,7 @@ class UniversalAiVisionService(private val context: Context) {
         }
 
         try {
-            val jsonText = extractJson(rawResult.getOrThrow())
+            val jsonText = repairJsonText(extractJson(rawResult.getOrThrow()))
             val obj = JSONObject(jsonText)
             val idsArray = obj.optJSONArray("matchedItemIds")
             val ids = mutableListOf<Long>()
@@ -791,7 +849,7 @@ class UniversalAiVisionService(private val context: Context) {
         }
 
         try {
-            val jsonText = extractJson(rawResult.getOrThrow())
+            val jsonText = repairJsonText(extractJson(rawResult.getOrThrow()))
             val array = JSONArray(jsonText)
             val adviceList = mutableListOf<DeclutterAdvice>()
             for (i in 0 until array.length()) {
@@ -814,6 +872,66 @@ class UniversalAiVisionService(private val context: Context) {
             } else {
                 Result.failure(Exception("断舍离建议解析失败: ${e.message}"))
             }
+        }
+    }
+
+    private fun parseBoxCoordinates(boxObj: Any?): List<Int>? {
+        if (boxObj == null) return null
+        val numbers = mutableListOf<Double>()
+
+        try {
+            if (boxObj is JSONArray) {
+                if (boxObj.length() != 4) return null
+                for (i in 0 until 4) {
+                    numbers.add(boxObj.getDouble(i))
+                }
+            } else {
+                val str = boxObj.toString()
+                val matches = Regex("-?\\d+(?:\\.\\d+)?").findAll(str).mapNotNull { it.value.toDoubleOrNull() }.toList()
+                if (matches.size == 4) {
+                    numbers.addAll(matches)
+                } else {
+                    return null
+                }
+            }
+
+            if (numbers.size != 4 || numbers.any { it.isNaN() }) return null
+
+            val v0 = numbers[0]
+            val v1 = numbers[1]
+            val v2 = numbers[2]
+            val v3 = numbers[3]
+
+            // 判别是否为 0.0 ~ 1.0 的浮点归一化数值 (OpenAI/QwenVL 常见)
+            val isFloatNorm = v0 <= 1.0 && v1 <= 1.0 && v2 <= 1.0 && v3 <= 1.0 && (v0 > 0 || v1 > 0 || v2 > 0 || v3 > 0)
+            val mult = if (isFloatNorm) 1000.0 else 1.0
+
+            var ymin = (v0 * mult).toInt()
+            var xmin = (v1 * mult).toInt()
+            var ymax = (v2 * mult).toInt()
+            var xmax = (v3 * mult).toInt()
+
+            // 防翻转处理
+            if (ymin > ymax) { val tmp = ymin; ymin = ymax; ymax = tmp }
+            if (xmin > xmax) { val tmp = xmin; xmin = xmax; xmax = tmp }
+
+            // 限制范围在 0..1000
+            ymin = ymin.coerceIn(0, 1000)
+            xmin = xmin.coerceIn(0, 1000)
+            ymax = ymax.coerceIn(ymin + 1, 1000)
+            xmax = xmax.coerceIn(xmin + 1, 1000)
+
+            // 过滤极微小碎片与超大背景框 (小于 0.1% 或 大于 95% 视为非有效具体物品框)
+            val w = xmax - xmin
+            val h = ymax - ymin
+            val areaRatio = (w.toDouble() * h.toDouble()) / 1000000.0
+            if (areaRatio < 0.001 || areaRatio > 0.95) {
+                return null
+            }
+
+            return listOf(ymin, xmin, ymax, xmax)
+        } catch (e: Exception) {
+            return null
         }
     }
 }

@@ -398,7 +398,8 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
 
     // AI Operations
     private var lastSingleBitmap: Bitmap? = null
-    private var lastBatchBitmap: Bitmap? = null
+    var lastBatchBitmap: Bitmap? = null
+        private set
 
     fun recognizeSinglePhoto(bitmap: Bitmap) {
         lastSingleBitmap = bitmap

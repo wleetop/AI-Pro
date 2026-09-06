@@ -200,7 +200,8 @@ object LocalHeuristicEngine {
                 quantity = 1,
                 unit = "个",
                 tags = listOf("快充", "数码"),
-                isSelected = true
+                isSelected = true,
+                boxNorm = listOf(150, 150, 450, 450)
             ),
             BatchRecognizedItem(
                 id = UUID.randomUUID().toString(),
@@ -210,7 +211,8 @@ object LocalHeuristicEngine {
                 quantity = 2,
                 unit = "条",
                 tags = listOf("线材", "充电"),
-                isSelected = true
+                isSelected = true,
+                boxNorm = listOf(150, 550, 450, 850)
             ),
             BatchRecognizedItem(
                 id = UUID.randomUUID().toString(),
@@ -220,7 +222,8 @@ object LocalHeuristicEngine {
                 quantity = 1,
                 unit = "本",
                 tags = listOf("办公", "随手记"),
-                isSelected = true
+                isSelected = true,
+                boxNorm = listOf(550, 150, 850, 450)
             ),
             BatchRecognizedItem(
                 id = UUID.randomUUID().toString(),
@@ -230,7 +233,8 @@ object LocalHeuristicEngine {
                 quantity = 1,
                 unit = "个",
                 tags = listOf("饮具", "便携"),
-                isSelected = true
+                isSelected = true,
+                boxNorm = listOf(550, 550, 850, 850)
             ),
             BatchRecognizedItem(
                 id = UUID.randomUUID().toString(),
@@ -240,7 +244,8 @@ object LocalHeuristicEngine {
                 quantity = 3,
                 unit = "包",
                 tags = listOf("卫生清洁", "日常"),
-                isSelected = true
+                isSelected = true,
+                boxNorm = listOf(300, 300, 700, 700)
             )
         )
     }
