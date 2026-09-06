@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Storage Box Base -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M30,42 L54,28 L78,42 L78,74 L54,88 L30,74 Z" />
+    <!-- Top Face (Lid) -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M30,42 L54,28 L78,42 L54,55 Z" />
+    <!-- Right Shaded Face -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M54,55 L78,42 L78,74 L54,88 Z" />
+    <!-- Center Dividing Line -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#0EA5E9"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,55 L54,88" />
+    <!-- Smart AI Sparkle / Eye Emblem -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M54,34 C55,39 59,43 64,44 C59,45 55,49 54,54 C53,49 49,45 44,44 C49,43 53,39 54,34 Z" />
+    <!-- Storage Handle / Tag Slot -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M38,58 L48,64 L48,68 L38,62 Z" />
+    <!-- Privacy Lock Dot -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M66,62 A3,3 0 1,1 66,68 A3,3 0 1,1 66,62 Z" />
+</vector>

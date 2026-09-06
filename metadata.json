@@ -1,0 +1,6 @@
+{
+  "name": "万物收纳 Pro",
+  "description": "融合极致数据隐私与前沿 AI 视觉技术的现代化个人物品及资产管理应用，支持 Local-First 纯本地存储、空间层级树与虚拟收纳箱二维码、ListPlus 批量识图、小票解析、断舍离建议及多端备份。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
