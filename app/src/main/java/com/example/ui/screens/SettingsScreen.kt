@@ -3,6 +3,8 @@ package com.example.ui.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +28,10 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.SaveAlt
 import com.example.util.WebDavManager
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MenuBook
@@ -101,6 +105,7 @@ fun SettingsScreen(
     var geminiModel by remember(apiConfig) { mutableStateOf(apiConfig.geminiModel) }
     var useLocalOffline by remember(apiConfig) { mutableStateOf(apiConfig.useLocalOfflineEngine) }
     var autoFallbackLocal by remember(apiConfig) { mutableStateOf(apiConfig.autoFallbackToLocal) }
+    var prioritizeLocalMatching by remember(apiConfig) { mutableStateOf(apiConfig.prioritizeLocalMatching) }
     var imageMaxDim by remember(apiConfig) { mutableStateOf(apiConfig.imageMaxDimension) }
     var imageQuality by remember(apiConfig) { mutableStateOf(apiConfig.imageQuality) }
     var openAiLowDetail by remember(apiConfig) { mutableStateOf(apiConfig.openAiLowDetail) }
@@ -121,6 +126,47 @@ fun SettingsScreen(
     var backupJsonDialogContent by remember { mutableStateOf<String?>(null) }
     var restoreJsonInput by remember { mutableStateOf<String?>(null) }
     var showWhitepaperDialog by remember { mutableStateOf(false) }
+
+    var pendingExportJson by remember { mutableStateOf<String?>(null) }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            val jsonContent = pendingExportJson
+            if (!jsonContent.isNullOrBlank()) {
+                try {
+                    context.contentResolver.openOutputStream(it)?.use { output ->
+                        output.write(jsonContent.toByteArray(Charsets.UTF_8))
+                    }
+                    viewModel.showMessage("已成功导出保存备份文件至本地存储！")
+                } catch (e: Exception) {
+                    viewModel.showMessage("保存文件失败: ${e.localizedMessage}")
+                }
+            } else {
+                viewModel.showMessage("备份内容为空，无法保存")
+            }
+        }
+    }
+
+    val openDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            try {
+                val jsonText = context.contentResolver.openInputStream(it)?.use { input ->
+                    input.bufferedReader().use { reader -> reader.readText() }
+                }
+                if (!jsonText.isNullOrBlank()) {
+                    viewModel.restoreBackupJson(jsonText)
+                } else {
+                    viewModel.showMessage("选中的备份文件内容为空，无法恢复")
+                }
+            } catch (e: Exception) {
+                viewModel.showMessage("读取备份文件失败: ${e.localizedMessage}")
+            }
+        }
+    }
 
     val totalAssetValue = remember(allItems) {
         allItems.mapNotNull { it.price }.sum()
@@ -271,7 +317,7 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Switch(
-                                checked = useLocalOffline,
+                                 checked = useLocalOffline,
                                 onCheckedChange = {
                                      useLocalOffline = it
                                     val updatedConfig = ApiConfig(
@@ -281,7 +327,8 @@ fun SettingsScreen(
                                         customModel = customModel.trim(),
                                         geminiModel = geminiModel.trim(),
                                         useLocalOfflineEngine = it,
-                                        autoFallbackToLocal = autoFallbackLocal
+                                        autoFallbackToLocal = autoFallbackLocal,
+                                        prioritizeLocalMatching = prioritizeLocalMatching
                                     )
                                     viewModel.updateApiConfig(updatedConfig)
                                 }
@@ -330,7 +377,58 @@ fun SettingsScreen(
                                         customModel = customModel.trim(),
                                         geminiModel = geminiModel.trim(),
                                         useLocalOfflineEngine = useLocalOffline,
-                                        autoFallbackToLocal = it
+                                        autoFallbackToLocal = it,
+                                        prioritizeLocalMatching = prioritizeLocalMatching
+                                    )
+                                    viewModel.updateApiConfig(updatedConfig)
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Prioritize Local Matching Before Cloud Switch
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (prioritizeLocalMatching) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "云端请求前优先本地特征匹配",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (prioritizeLocalMatching) "已启用：在发起云端 AI 联想前，优先匹配本地加权词库与历史记录。高置信度命中时秒级无网响应并节省 API 消耗。" else "已停用：输入物品名称时将无视本地词库，直接发起云端 AI 请求。",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Switch(
+                                checked = prioritizeLocalMatching,
+                                onCheckedChange = {
+                                    prioritizeLocalMatching = it
+                                    val updatedConfig = ApiConfig(
+                                        provider = selectedProvider,
+                                        apiKey = apiKeyInput.trim(),
+                                        customBaseUrl = customBaseUrl.trim(),
+                                        customModel = customModel.trim(),
+                                        geminiModel = geminiModel.trim(),
+                                        useLocalOfflineEngine = useLocalOffline,
+                                        autoFallbackToLocal = autoFallbackLocal,
+                                        prioritizeLocalMatching = it
                                     )
                                     viewModel.updateApiConfig(updatedConfig)
                                 }
@@ -743,7 +841,7 @@ fun SettingsScreen(
                     ) {
                         OutlinedButton(
                             onClick = {
-                                val currentConfig = ApiConfig(
+                                 val currentConfig = ApiConfig(
                                     provider = selectedProvider,
                                     apiKey = apiKeyInput.trim(),
                                     customBaseUrl = customBaseUrl.trim(),
@@ -751,6 +849,7 @@ fun SettingsScreen(
                                     geminiModel = geminiModel.trim(),
                                     useLocalOfflineEngine = useLocalOffline,
                                     autoFallbackToLocal = autoFallbackLocal,
+                                    prioritizeLocalMatching = prioritizeLocalMatching,
                                     imageMaxDimension = imageMaxDim,
                                     imageQuality = imageQuality,
                                     openAiLowDetail = openAiLowDetail,
@@ -776,6 +875,7 @@ fun SettingsScreen(
                                     geminiModel = geminiModel.trim(),
                                     useLocalOfflineEngine = useLocalOffline,
                                     autoFallbackToLocal = autoFallbackLocal,
+                                    prioritizeLocalMatching = prioritizeLocalMatching,
                                     imageMaxDimension = imageMaxDim,
                                     imageQuality = imageQuality,
                                     openAiLowDetail = openAiLowDetail,
@@ -818,7 +918,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "数据存储于设备私有沙盒中。一键打包所有物品清单、分类层级及图片 Base64 编码为标准化 .json 文件，瞬间无损恢复。",
+                        text = "数据完全存储于设备本地私有库中。支持直接导出导出保存为 `.json` 备份文件到本地下载/文档目录，随时选择本地备份文件一键恢复。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -832,23 +932,55 @@ fun SettingsScreen(
                         Button(
                             onClick = {
                                 viewModel.exportBackupJson { json ->
-                                    backupJsonDialogContent = json
+                                    pendingExportJson = json
+                                    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                                    createDocumentLauncher.launch("StoragePro_Backup_${timeStamp}.json")
                                 }
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.SaveAlt, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("生成本地备份")
+                            Text("保存备份为文件")
                         }
 
                         OutlinedButton(
-                            onClick = { restoreJsonInput = "" },
+                            onClick = {
+                                openDocumentLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("上传/导入恢复")
+                            Text("读取文件恢复")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.TextButton(
+                            onClick = {
+                                viewModel.exportBackupJson { json ->
+                                    backupJsonDialogContent = json
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("查看/复制 JSON 源码", style = MaterialTheme.typography.labelSmall)
+                        }
+
+                        androidx.compose.material3.TextButton(
+                            onClick = { restoreJsonInput = "" }
+                        ) {
+                            Icon(Icons.Default.FileUpload, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("粘贴 JSON 源码恢复", style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }

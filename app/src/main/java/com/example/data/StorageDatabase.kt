@@ -64,6 +64,7 @@ abstract class StorageDatabase : RoomDatabase() {
                 StorageCategory(name = "重要证件", icon = "badge", colorHex = "#6366F1"),
                 StorageCategory(name = "美妆护肤", icon = "spa", colorHex = "#F43F5E"),
                 StorageCategory(name = "工具五金", icon = "build", colorHex = "#64748B"),
+                StorageCategory(name = "电子元器件", icon = "memory", colorHex = "#10B981"),
                 StorageCategory(name = "文具书籍", icon = "menu_book", colorHex = "#06B6D4")
             )
             database.storageCategoryDao().insertAll(defaultCategories)

@@ -516,8 +516,8 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
                     return@launch
                 }
 
-                _aiState.value = AiOperationState.Loading("正在为「$name」规划收纳建议...")
-                val result = aiService.suggestForNameOnly(name)
+                _aiState.value = AiOperationState.Loading("正在进行本地特征表与历史分类匹配...")
+                val result = aiService.suggestForNameOnly(name, allItems.value)
                 result.onSuccess { res ->
                     _aiState.value = AiOperationState.SingleSuccess(res)
                     try {

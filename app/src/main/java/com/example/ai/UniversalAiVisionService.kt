@@ -54,6 +54,7 @@ class UniversalAiVisionService(private val context: Context) {
         }
         val useLocalOffline = sp.getBoolean("use_local_offline", false)
         val autoFallback = sp.getBoolean("auto_fallback_local", true)
+        val prioritizeLocal = sp.getBoolean("prioritize_local_matching", true)
         val imageMaxDim = sp.getInt("image_max_dim", 640)
         val imageQuality = sp.getInt("image_quality", 70)
         val openAiLowDetail = sp.getBoolean("openai_low_detail", true)
@@ -67,6 +68,7 @@ class UniversalAiVisionService(private val context: Context) {
             geminiModel = sp.getString("gemini_model", "gemini-3.5-flash") ?: "gemini-3.5-flash",
             useLocalOfflineEngine = useLocalOffline,
             autoFallbackToLocal = autoFallback,
+            prioritizeLocalMatching = prioritizeLocal,
             imageMaxDimension = imageMaxDim,
             imageQuality = imageQuality,
             openAiLowDetail = openAiLowDetail,
@@ -84,6 +86,7 @@ class UniversalAiVisionService(private val context: Context) {
             .putString("gemini_model", config.geminiModel)
             .putBoolean("use_local_offline", config.useLocalOfflineEngine)
             .putBoolean("auto_fallback_local", config.autoFallbackToLocal)
+            .putBoolean("prioritize_local_matching", config.prioritizeLocalMatching)
             .putInt("image_max_dim", config.imageMaxDimension)
             .putInt("image_quality", config.imageQuality)
             .putBoolean("openai_low_detail", config.openAiLowDetail)
@@ -513,11 +516,19 @@ class UniversalAiVisionService(private val context: Context) {
         }
     }
 
-    // 2. 仅输入名称进行语义联想与收纳建议
-    suspend fun suggestForNameOnly(itemName: String): Result<SingleItemRecognitionResult> = withContext(Dispatchers.Default) {
+    // 2. 仅输入名称进行语义联想与收纳建议（可配置是否优先尝试本地基础权重与历史语义匹配）
+    suspend fun suggestForNameOnly(itemName: String, historyItems: List<StorageItem> = emptyList()): Result<SingleItemRecognitionResult> = withContext(Dispatchers.Default) {
+        val localMatch = LocalHeuristicEngine.matchCategoryAndInfoLocally(itemName, historyItems)
         val config = loadConfig()
+
+        // 1) 处于纯本地离线模式 / 未填 API Key 时：必定直接返回本地匹配结果
         if (config.useLocalOfflineEngine || config.apiKey.isBlank()) {
-            return@withContext Result.success(LocalHeuristicEngine.suggestForNameOnly(itemName))
+            return@withContext Result.success(localMatch.result)
+        }
+
+        // 2) 开启了“发起云端 API 请求前，优先执行本地特征匹配”选项目标，且本地达到了高置信度命中（历史精确/模糊命中或高权重分类）：直接返回本地结果，免发网络请求
+        if (config.prioritizeLocalMatching && localMatch.isMatched) {
+            return@withContext Result.success(localMatch.result)
         }
 
         val prompt = """
@@ -538,7 +549,7 @@ class UniversalAiVisionService(private val context: Context) {
         if (rawResult.isFailure) {
             val ex = rawResult.exceptionOrNull()
             if (config.autoFallbackToLocal || ex?.message == "USE_LOCAL_ENGINE") {
-                return@withContext Result.success(LocalHeuristicEngine.suggestForNameOnly(itemName))
+                return@withContext Result.success(localMatch.result)
             }
             return@withContext Result.failure(ex ?: Exception("建议生成失败"))
         }
@@ -568,7 +579,7 @@ class UniversalAiVisionService(private val context: Context) {
             )
         } catch (e: Exception) {
             if (config.autoFallbackToLocal) {
-                Result.success(LocalHeuristicEngine.suggestForNameOnly(itemName))
+                Result.success(localMatch.result)
             } else {
                 Result.failure(Exception("解析建议失败: ${e.message}"))
             }
@@ -579,7 +590,7 @@ class UniversalAiVisionService(private val context: Context) {
     suspend fun recognizeBatchListPlus(bitmap: Bitmap): Result<List<BatchRecognizedItem>> = withContext(Dispatchers.Default) {
         val config = loadConfig()
         if (config.useLocalOfflineEngine || config.apiKey.isBlank()) {
-            return@withContext Result.success(LocalHeuristicEngine.recognizeBatchListPlus())
+            return@withContext Result.success(LocalHeuristicEngine.recognizeBatchListPlus(bitmap))
         }
 
         val prompt = """
@@ -606,7 +617,7 @@ class UniversalAiVisionService(private val context: Context) {
         if (rawResult.isFailure) {
             val ex = rawResult.exceptionOrNull()
             if (config.autoFallbackToLocal || ex?.message == "USE_LOCAL_ENGINE") {
-                return@withContext Result.success(LocalHeuristicEngine.recognizeBatchListPlus())
+                return@withContext Result.success(LocalHeuristicEngine.recognizeBatchListPlus(bitmap))
             }
             return@withContext Result.failure(ex ?: Exception("批量识图失败"))
         }
@@ -670,14 +681,14 @@ class UniversalAiVisionService(private val context: Context) {
                 Result.success(list)
             } else {
                 if (config.autoFallbackToLocal) {
-                    Result.success(LocalHeuristicEngine.recognizeBatchListPlus())
+                    Result.success(LocalHeuristicEngine.recognizeBatchListPlus(bitmap))
                 } else {
                     Result.failure(Exception("未能从云端回应中提取出有效物品"))
                 }
             }
         } catch (e: Exception) {
             if (config.autoFallbackToLocal) {
-                Result.success(LocalHeuristicEngine.recognizeBatchListPlus())
+                Result.success(LocalHeuristicEngine.recognizeBatchListPlus(bitmap))
             } else {
                 Result.failure(Exception("解析批量物品清单失败: ${e.message}"))
             }

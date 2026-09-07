@@ -8,6 +8,7 @@ data class ApiConfig(
     val geminiModel: String = "gemini-3.5-flash",
     val useLocalOfflineEngine: Boolean = false,
     val autoFallbackToLocal: Boolean = true,
+    val prioritizeLocalMatching: Boolean = true, // 云端 API 请求前优先执行本地特征匹配 (可选项)
     // 传输与Token性能优化 (针对全家福多物批量识别与单物识别自动优化)
     val imageMaxDimension: Int = 1024,    // 默认提升至 1024px，确保多物品细节清晰，可选 640/1024/1280
     val imageQuality: Int = 85,           // JPEG压缩质量：提升至 85% 避免边缘锯齿导致误识别
