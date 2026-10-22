@@ -65,7 +65,14 @@ abstract class StorageDatabase : RoomDatabase() {
                 StorageCategory(name = "美妆护肤", icon = "spa", colorHex = "#F43F5E"),
                 StorageCategory(name = "工具五金", icon = "build", colorHex = "#64748B"),
                 StorageCategory(name = "电子元器件", icon = "memory", colorHex = "#10B981"),
-                StorageCategory(name = "文具书籍", icon = "menu_book", colorHex = "#06B6D4")
+                StorageCategory(name = "文具书籍", icon = "menu_book", colorHex = "#06B6D4"),
+                StorageCategory(name = "运动健身", icon = "fitness_center", colorHex = "#F97316"),
+                StorageCategory(name = "办公耗材", icon = "print", colorHex = "#0284C7"),
+                StorageCategory(name = "家居园艺", icon = "yard", colorHex = "#22C55E"),
+                StorageCategory(name = "乐器影音", icon = "music_note", colorHex = "#A855F7"),
+                StorageCategory(name = "汽车用品", icon = "directions_car", colorHex = "#6366F1"),
+                StorageCategory(name = "模型收藏", icon = "smart_toy", colorHex = "#EAB308"),
+                StorageCategory(name = "家用电器", icon = "kitchen", colorHex = "#14B8A6")
             )
             database.storageCategoryDao().insertAll(defaultCategories)
 

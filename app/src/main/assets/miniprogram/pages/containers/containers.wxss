@@ -1,0 +1,77 @@
+/* pages/containers/containers.wxss */
+.root-container-card {
+  margin-bottom: 20rpx;
+  border-left: 8rpx solid #1890FF;
+}
+
+.root-header {
+  padding-bottom: 12rpx;
+}
+
+.root-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+
+.root-name {
+  font-size: 32rpx;
+  color: #1A202C;
+}
+
+.count-tag {
+  font-size: 20rpx;
+  background: #E6F7FF;
+  color: #1890FF;
+  padding: 2rpx 14rpx;
+  border-radius: 12rpx;
+  margin-left: 12rpx;
+}
+
+.action-text {
+  font-size: 24rpx;
+  color: #07C160;
+  font-weight: 600;
+  margin-right: 20rpx;
+}
+
+.action-del {
+  font-size: 24rpx;
+  color: #FF4D4F;
+}
+
+.sub-container-list {
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx dashed #E2E8F0;
+}
+
+.sub-container-row {
+  padding: 12rpx 0;
+}
+
+.sub-line {
+  color: #A0AEC0;
+  margin-right: 8rpx;
+}
+
+.sub-icon {
+  font-size: 26rpx;
+  margin-right: 8rpx;
+}
+
+.sub-name {
+  font-size: 28rpx;
+  color: #4A5568;
+}
+
+.sub-count {
+  font-size: 22rpx;
+  color: #A0AEC0;
+  margin-left: 8rpx;
+}
+
+.action-del-sub {
+  font-size: 26rpx;
+  color: #CBD5E0;
+  padding: 4rpx 12rpx;
+}

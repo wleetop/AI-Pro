@@ -8,6 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.example.ui.MainAppNavigation
 import com.example.ui.theme.StorageProTheme
 import com.example.viewmodel.StorageViewModel
@@ -19,7 +21,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            StorageProTheme {
+            val themePreset by viewModel.currentThemePreset.collectAsState()
+            StorageProTheme(preset = themePreset) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainAppNavigation(viewModel = viewModel)
                 }

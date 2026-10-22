@@ -1,0 +1,48 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/ai-scan/ai-scan",
+    "pages/containers/containers",
+    "pages/item-edit/item-edit",
+    "pages/item-detail/item-detail",
+    "pages/settings/settings"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#07C160",
+    "navigationBarTitleText": "AI 智存空间",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F7F8FA"
+  },
+  "tabBar": {
+    "color": "#8A8A8A",
+    "selectedColor": "#07C160",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "物品清单"
+      },
+      {
+        "pagePath": "pages/ai-scan/ai-scan",
+        "text": "AI识图"
+      },
+      {
+        "pagePath": "pages/containers/containers",
+        "text": "空间收纳"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "设置与同步"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.camera": {
+      "desc": "用于拍照识别物品与扫描条码二维码"
+    }
+  }
+}

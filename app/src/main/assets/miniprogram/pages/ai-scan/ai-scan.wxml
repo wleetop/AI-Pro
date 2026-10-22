@@ -1,0 +1,107 @@
+<!-- pages/ai-scan/ai-scan.wxml - 微信小程序 AI 识图 -->
+<view class="container">
+  <!-- 拍照与图片上传卡片 -->
+  <view class="card camera-box flex-center" bindtap="onChooseImage">
+    <image wx:if="{{imagePath}}" src="{{imagePath}}" class="preview-img" mode="aspectFit"/>
+    <view wx:else class="upload-placeholder flex-center">
+      <text class="camera-icon">📸</text>
+      <text class="upload-title">点击拍摄或从相册选取物品/元器件</text>
+      <text class="upload-sub">支持单件特写或多物品同框批量识别</text>
+    </view>
+  </view>
+
+  <!-- 提示词微调与补充输入 -->
+  <view class="card">
+    <view class="flex-between" style="margin-bottom: 12rpx;">
+      <text class="text-bold">💡 识别引导 / 补充说明 (可选)</text>
+      <text class="current-model-tag">{{apiConfig.provider === 'OFFLINE_HEURISTIC' ? '离线规则库' : '云端大模型'}}</text>
+    </view>
+    <textarea 
+      class="prompt-input" 
+      placeholder="如：这是我刚买的 10k 贴片电阻和 STM32 开发板，请识别规格并归入创客抽屉" 
+      value="{{userPrompt}}"
+      bindinput="onPromptInput"
+      auto-height
+    />
+  </view>
+
+  <!-- 操作按钮栏 -->
+  <view class="action-btn-group">
+    <button 
+      class="btn-primary" 
+      loading="{{isAnalyzing}}" 
+      disabled="{{isAnalyzing || (!imagePath && !userPrompt)}}"
+      bindtap="onStartAnalyze"
+    >
+      {{isAnalyzing ? analyzingStatusText : '⚡ 启动 AI 智能识别'}}
+    </button>
+  </view>
+
+  <!-- 识别结果展示与批量入库 -->
+  <view wx:if="{{recognizedItems.length > 0}}" class="results-section">
+    <view class="flex-between results-header">
+      <text class="text-bold">🎯 识别结果 ({{recognizedItems.length}} 件物品)</text>
+      <button class="btn-batch-save" bindtap="onBatchSaveAll">一键全部入库</button>
+    </view>
+
+    <!-- 结果卡片列表 -->
+    <view 
+      wx:for="{{recognizedItems}}" 
+      wx:key="index" 
+      class="card result-item-card"
+    >
+      <view class="flex-between">
+        <view class="flex-row">
+          <input 
+            class="item-name-edit text-bold" 
+            value="{{item.name}}" 
+            data-index="{{index}}" 
+            data-field="name" 
+            bindinput="onItemFieldChange"
+          />
+        </view>
+        <view class="flex-row">
+          <text class="qty-label">数量:</text>
+          <input 
+            class="item-qty-input" 
+            type="number" 
+            value="{{item.quantity}}" 
+            data-index="{{index}}" 
+            data-field="quantity"
+            bindinput="onItemFieldChange"
+          />
+          <text class="qty-unit">{{item.unit || '个'}}</text>
+        </view>
+      </view>
+
+      <view class="flex-row" style="margin-top: 14rpx; flex-wrap: wrap;">
+        <picker 
+          range="{{categoryNames}}" 
+          value="{{item.catIndex || 0}}" 
+          data-index="{{index}}"
+          bindchange="onCategoryPickerChange"
+        >
+          <view class="picker-pill">🏷️ {{item.categoryName}} ▾</view>
+        </picker>
+        <view wx:if="{{item.spec}}" class="tag-badge">规格: {{item.spec}}</view>
+        <view wx:if="{{item.brand}}" class="tag-badge">品牌: {{item.brand}}</view>
+      </view>
+
+      <view class="flex-row" style="margin-top: 14rpx;">
+        <text class="loc-icon">📍 推荐收纳: </text>
+        <input 
+          class="location-input" 
+          value="{{item.suggestedLocation}}" 
+          data-index="{{index}}" 
+          data-field="suggestedLocation"
+          bindinput="onItemFieldChange"
+        />
+      </view>
+
+      <view class="card-footer-action flex-between">
+        <text class="text-muted">预估单价: ¥{{item.estimatedPrice || 0}}</text>
+        <button class="btn-single-save" size="mini" bindtap="onSaveSingleItem" data-index="{{index}}">单个入库</button>
+      </view>
+    </view>
+  </view>
+</view>

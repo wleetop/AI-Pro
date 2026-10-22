@@ -1,0 +1,29 @@
+{
+  "miniprogramRoot": "./",
+  "projectname": "ai-storage-miniprogram",
+  "description": "AI 智能收纳与全域元器件资产管理系统 - 微信小程序版",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "uglifyFileName": false,
+    "checkInvalidPxml": true,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "coverView": true,
+    "nodeModules": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.4.0",
+  "condition": {}
+}

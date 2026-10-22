@@ -1,0 +1,49 @@
+/* pages/item-edit/item-edit.wxss */
+.form-card {
+  padding: 8rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.form-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #F0F2F5;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #2D3748;
+  min-width: 180rpx;
+}
+
+.form-input {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: #1A202C;
+}
+
+.form-input-short {
+  width: 140rpx;
+  text-align: right;
+  font-size: 28rpx;
+  color: #1A202C;
+  border-bottom: 1rpx solid #E2E8F0;
+  margin-left: 12rpx;
+}
+
+.picker-value {
+  font-size: 28rpx;
+  color: #07C160;
+  font-weight: 600;
+}
+
+.btn-scan-small {
+  background: #E8F7EE;
+  color: #07C160;
+  margin-left: 12rpx;
+  border-radius: 12rpx;
+}

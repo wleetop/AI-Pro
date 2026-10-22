@@ -1,0 +1,131 @@
+<!-- pages/item-edit/item-edit.wxml - 物品录入与详细编辑表单 -->
+<view class="container">
+  <!-- 基础信息卡片 -->
+  <view class="card form-card">
+    <view class="form-item flex-between">
+      <text class="form-label text-bold">物品名称 *</text>
+      <input 
+        class="form-input" 
+        placeholder="如 STM32F103C8T6 核心板" 
+        value="{{formData.name}}" 
+        data-field="name" 
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">所属分类</text>
+      <picker range="{{categoryNames}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+        <view class="picker-value">{{formData.categoryName}} ▾</view>
+      </picker>
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">存放位置/空间</text>
+      <input 
+        class="form-input" 
+        placeholder="如 书房/元器件抽屉柜" 
+        value="{{formData.locationPath}}" 
+        data-field="locationPath" 
+        bindinput="onInput"
+      />
+    </view>
+  </view>
+
+  <!-- 数量与价格卡片 -->
+  <view class="card form-card">
+    <view class="form-item flex-between">
+      <text class="form-label">数量与单位</text>
+      <view class="flex-row">
+        <input 
+          class="form-input-short" 
+          type="number" 
+          placeholder="数量" 
+          value="{{formData.quantity}}" 
+          data-field="quantity" 
+          bindinput="onInput"
+        />
+        <input 
+          class="form-input-short" 
+          placeholder="单位(个/包/片)" 
+          value="{{formData.unit}}" 
+          data-field="unit" 
+          bindinput="onInput"
+        />
+      </view>
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">单价 (¥)</text>
+      <input 
+        class="form-input" 
+        type="digit" 
+        placeholder="0.00" 
+        value="{{formData.price}}" 
+        data-field="price" 
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">型号规格</text>
+      <input 
+        class="form-input" 
+        placeholder="如 10kΩ 0805, 100uF 25V" 
+        value="{{formData.spec}}" 
+        data-field="spec" 
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">品牌/厂商</text>
+      <input 
+        class="form-input" 
+        placeholder="如 ST / 乐鑫 / 拓竹" 
+        value="{{formData.brand}}" 
+        data-field="brand" 
+        bindinput="onInput"
+      />
+    </view>
+  </view>
+
+  <!-- 条码与保质期 -->
+  <view class="card form-card">
+    <view class="form-item flex-between">
+      <text class="form-label">条形码 / QR码</text>
+      <view class="flex-row" style="flex: 1; justify-content: flex-end;">
+        <input 
+          class="form-input" 
+          placeholder="扫描或输入条码" 
+          value="{{formData.barcode}}" 
+          data-field="barcode" 
+          bindinput="onInput"
+        />
+        <button class="btn-scan-small" size="mini" bindtap="onScanBarcode">扫码</button>
+      </view>
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">保质期/到期日</text>
+      <picker mode="date" value="{{formData.expireDate}}" bindchange="onDateChange">
+        <view class="picker-value">{{formData.expireDate || '点击选择日期 ▾'}}</view>
+      </picker>
+    </view>
+
+    <view class="form-item flex-between">
+      <text class="form-label">标签 (逗号分隔)</text>
+      <input 
+        class="form-input" 
+        placeholder="MCU, 贴片, 研发" 
+        value="{{tagsInput}}" 
+        bindinput="onTagsInput"
+      />
+    </view>
+  </view>
+
+  <!-- 提交保存 -->
+  <view style="margin: 40rpx 0;">
+    <button class="btn-primary" bindtap="onSave">💾 保存入库</button>
+  </view>
+</view>

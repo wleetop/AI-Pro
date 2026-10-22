@@ -38,20 +38,14 @@ class UniversalAiVisionService(private val context: Context) {
 
     fun loadConfig(): ApiConfig {
         val sp = context.getSharedPreferences(PREFS_AI, Context.MODE_PRIVATE)
-        val providerStr = sp.getString("provider", ProviderType.GEMINI.name) ?: ProviderType.GEMINI.name
+        val providerStr = sp.getString("provider", ProviderType.HUNYUAN_3.name) ?: ProviderType.HUNYUAN_3.name
         val provider = try {
             ProviderType.valueOf(providerStr)
         } catch (e: Exception) {
-            ProviderType.GEMINI
+            ProviderType.HUNYUAN_3
         }
         val customApiKey = sp.getString("api_key", "") ?: ""
-        val effectiveApiKey = customApiKey.ifBlank {
-            try {
-                BuildConfig.GEMINI_API_KEY.takeIf { it.isNotBlank() && it != "MY_GEMINI_API_KEY" } ?: ""
-            } catch (e: Exception) {
-                ""
-            }
-        }
+        val effectiveApiKey = customApiKey // Default is blank, prompt user to input their own key
         val useLocalOffline = sp.getBoolean("use_local_offline", false)
         val autoFallback = sp.getBoolean("auto_fallback_local", true)
         val prioritizeLocal = sp.getBoolean("prioritize_local_matching", true)
@@ -63,8 +57,10 @@ class UniversalAiVisionService(private val context: Context) {
         return ApiConfig(
             provider = provider,
             apiKey = effectiveApiKey,
-            customBaseUrl = sp.getString("custom_base_url", "https://api.openai.com/v1") ?: "https://api.openai.com/v1",
-            customModel = sp.getString("custom_model", "gpt-4o") ?: "gpt-4o",
+            hunyuanBaseUrl = sp.getString("hunyuan_base_url", "https://api.hunyuan.cloud.tencent.com/v1") ?: "https://api.hunyuan.cloud.tencent.com/v1",
+            hunyuanModel = sp.getString("hunyuan_model", "hunyuan-vision") ?: "hunyuan-vision",
+            customBaseUrl = sp.getString("custom_base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1") ?: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            customModel = sp.getString("custom_model", "qwen-vl-plus") ?: "qwen-vl-plus",
             geminiModel = sp.getString("gemini_model", "gemini-3.5-flash") ?: "gemini-3.5-flash",
             useLocalOfflineEngine = useLocalOffline,
             autoFallbackToLocal = autoFallback,
@@ -81,6 +77,8 @@ class UniversalAiVisionService(private val context: Context) {
         sp.edit()
             .putString("provider", config.provider.name)
             .putString("api_key", config.apiKey)
+            .putString("hunyuan_base_url", config.hunyuanBaseUrl)
+            .putString("hunyuan_model", config.hunyuanModel)
             .putString("custom_base_url", config.customBaseUrl)
             .putString("custom_model", config.customModel)
             .putString("gemini_model", config.geminiModel)
@@ -110,14 +108,18 @@ class UniversalAiVisionService(private val context: Context) {
         val startTime = System.currentTimeMillis()
         try {
             val testPrompt = "请简短输出纯JSON：{\"status\":\"ok\"}"
-            val res = if (config.provider == ProviderType.GEMINI) {
-                callGemini(config, testPrompt, null)
-            } else {
-                callOpenAiCompatible(config, testPrompt, null)
+            val res = when (config.provider) {
+                ProviderType.HUNYUAN_3 -> callHunyuan3(config, testPrompt, null)
+                ProviderType.GEMINI -> callGemini(config, testPrompt, null)
+                ProviderType.OPENAI_COMPATIBLE -> callOpenAiCompatible(config, testPrompt, null)
             }
             if (res.isSuccess) {
                 val elapsed = System.currentTimeMillis() - startTime
-                val providerLabel = if (config.provider == ProviderType.GEMINI) "Google Gemini (${config.geminiModel})" else "OpenAI 兼容 (${config.customModel})"
+                val providerLabel = when (config.provider) {
+                    ProviderType.HUNYUAN_3 -> "腾讯混元 3 (${config.hunyuanModel})"
+                    ProviderType.GEMINI -> "Google Gemini 备选 (${config.geminiModel})"
+                    ProviderType.OPENAI_COMPATIBLE -> "OpenAI 兼容 (${config.customModel})"
+                }
                 Result.success("✅ 连接成功！$providerLabel 响应正常，延迟 ${elapsed}ms")
             } else {
                 val err = res.exceptionOrNull()?.message ?: "未能收到模型响应"
@@ -169,10 +171,10 @@ class UniversalAiVisionService(private val context: Context) {
         }
 
         try {
-            if (config.provider == ProviderType.GEMINI) {
-                callGemini(config, prompt, bitmap, maxTokens, overrideMaxDim, overrideQuality)
-            } else {
-                callOpenAiCompatible(config, prompt, bitmap, maxTokens, overrideMaxDim, overrideQuality, forceHighDetail)
+            when (config.provider) {
+                ProviderType.HUNYUAN_3 -> callHunyuan3(config, prompt, bitmap, maxTokens, overrideMaxDim, overrideQuality, forceHighDetail)
+                ProviderType.GEMINI -> callGemini(config, prompt, bitmap, maxTokens, overrideMaxDim, overrideQuality)
+                ProviderType.OPENAI_COMPATIBLE -> callOpenAiCompatible(config, prompt, bitmap, maxTokens, overrideMaxDim, overrideQuality, forceHighDetail)
             }
         } catch (e: Exception) {
             val msg = when {
@@ -181,6 +183,84 @@ class UniversalAiVisionService(private val context: Context) {
                 else -> "AI 服务调用异常: ${e.localizedMessage ?: e.message}"
             }
             Result.failure(Exception(msg))
+        }
+    }
+
+    private fun callHunyuan3(
+        config: ApiConfig,
+        prompt: String,
+        bitmap: Bitmap?,
+        maxTokens: Int = 400,
+        overrideMaxDim: Int? = null,
+        overrideQuality: Int? = null,
+        forceHighDetail: Boolean = false
+    ): Result<String> {
+        val baseUrl = config.getNormalizedBaseUrl()
+        val url = if (baseUrl.endsWith("/chat/completions")) baseUrl else "$baseUrl/chat/completions"
+        val model = config.hunyuanModel.ifBlank { "hunyuan-vision" }
+
+        val messagesArray = JSONArray()
+        val userMessage = JSONObject().put("role", "user")
+
+        if (bitmap != null) {
+            val base64 = bitmapToBase64(bitmap, config, overrideMaxDim, overrideQuality)
+            val contentArray = JSONArray()
+            contentArray.put(JSONObject().put("type", "text").put("text", prompt))
+            val imageUrlObj = JSONObject().put("url", "data:image/jpeg;base64,$base64")
+            val isLowDetail = if (forceHighDetail) false else config.openAiLowDetail
+            if (isLowDetail) {
+                imageUrlObj.put("detail", "low")
+            } else {
+                imageUrlObj.put("detail", "high")
+            }
+            contentArray.put(
+                JSONObject().put("type", "image_url").put("image_url", imageUrlObj)
+            )
+            userMessage.put("content", contentArray)
+        } else {
+            userMessage.put("content", prompt)
+        }
+
+        messagesArray.put(userMessage)
+
+        val root = JSONObject()
+            .put("model", model)
+            .put("messages", messagesArray)
+            .put("temperature", 0.1)
+            .put("max_tokens", maxTokens)
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${config.apiKey}")
+            .post(root.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+
+        return client.newCall(request).execute().use { response ->
+            val responseBody = response.body?.string() ?: ""
+            if (!response.isSuccessful) {
+                val errorDesc = try {
+                    val errObj = JSONObject(responseBody).optJSONObject("error")
+                    errObj?.optString("message") ?: responseBody
+                } catch (e: Exception) {
+                    responseBody
+                }
+                return Result.failure(Exception("腾讯混元 3 接口返回错误 (${response.code}): $errorDesc"))
+            }
+
+            val jsonResponse = JSONObject(responseBody)
+            val choices = jsonResponse.optJSONArray("choices")
+            val firstChoice = choices?.optJSONObject(0)
+            val message = firstChoice?.optJSONObject("message")
+            var text = message?.optString("content", "") ?: ""
+            if (text.isBlank()) {
+                text = message?.optString("reasoning_content", "") ?: ""
+            }
+
+            if (text.isBlank()) {
+                Result.failure(Exception("未能从腾讯混元 3 获取有效回复内容"))
+            } else {
+                Result.success(text)
+            }
         }
     }
 

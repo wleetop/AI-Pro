@@ -1,0 +1,99 @@
+/* pages/item-detail/item-detail.wxss */
+.detail-header-card {
+  border-left: 8rpx solid #07C160;
+}
+
+.item-name {
+  font-size: 36rpx;
+  color: #1A202C;
+}
+
+.item-price-wrap {
+  text-align: right;
+}
+
+.price-val {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #E53E3E;
+}
+
+.price-unit {
+  font-size: 22rpx;
+  color: #718096;
+}
+
+.qty-control-box {
+  background: #F7F8FA;
+  border-radius: 20rpx;
+  padding: 16rpx 24rpx;
+}
+
+.qty-btn {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #07C160;
+  width: 140rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+
+.qty-display {
+  text-align: center;
+}
+
+.qty-num {
+  font-size: 48rpx;
+  color: #1A202C;
+}
+
+.qty-unit-label {
+  font-size: 24rpx;
+  color: #718096;
+  margin-left: 8rpx;
+}
+
+.attr-row {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #F0F2F5;
+}
+
+.attr-row:last-child {
+  border-bottom: none;
+}
+
+.attr-label {
+  font-size: 28rpx;
+  color: #718096;
+}
+
+.attr-value {
+  font-size: 28rpx;
+  color: #2D3748;
+}
+
+.footer-btn-row {
+  margin: 40rpx 0;
+}
+
+.btn-del {
+  width: 200rpx;
+  background: #FFF1F0;
+  color: #F5222D;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.btn-edit {
+  flex: 1;
+  margin-left: 20rpx;
+  background: #07C160;
+  color: #FFFFFF;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}

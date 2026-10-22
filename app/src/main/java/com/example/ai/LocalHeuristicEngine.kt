@@ -476,7 +476,105 @@ object LocalHeuristicEngine {
                     storageTips = "使用完毕后务必切断电源，高温工具待冷却后再归位挂至洞洞板。"
                 )
             }
-            // 13. 文具书籍
+            // 13. 运动健身
+            listOf("哑铃", "瑜伽", "跑步机", "筋膜枪", "蛋白粉", "跳绳", "球拍", "羽毛球", "网球", "篮球", "足球", "握力器", "划船机").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "运动健身",
+                    suggestedLocation = "阳台/健身区",
+                    quantity = 1,
+                    unit = "件",
+                    estimatedPrice = 160.0,
+                    expiryDays = null,
+                    tags = listOf("运动健身", "健康生活"),
+                    storageTips = "锻炼后擦拭汗渍，重物哑铃摆放平稳防止磕碰地面。"
+                )
+            }
+            // 14. 办公耗材
+            listOf("打印机", "墨盒", "硒鼓", "a4纸", "碎纸机", "塑封机", "印泥", "考勤机", "白板笔", "回形针").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "办公耗材",
+                    suggestedLocation = "书房/打印办公柜",
+                    quantity = 1,
+                    unit = "盒",
+                    estimatedPrice = 85.0,
+                    expiryDays = null,
+                    tags = listOf("办公耗材", "高效办公"),
+                    storageTips = "纸张与墨盒需避光防潮平放保存。"
+                )
+            }
+            // 15. 家居园艺
+            listOf("洒水壶", "花盆", "营养土", "肥料", "修剪剪", "补光灯", "绿植", "多肉", "喷雾器").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "家居园艺",
+                    suggestedLocation = "阳台/花架",
+                    quantity = 1,
+                    unit = "盆",
+                    estimatedPrice = 35.0,
+                    expiryDays = null,
+                    tags = listOf("家居园艺", "绿植养护"),
+                    storageTips = "肥料土壤密闭储存，防止散落与潮湿霉变。"
+                )
+            }
+            // 16. 乐器影音
+            listOf("吉他", "调音器", "电子琴", "钢琴", "尤克里里", "麦克风", "声卡", "黑胶", "耳放", "小提琴").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "乐器影音",
+                    suggestedLocation = "客厅/乐器展架",
+                    quantity = 1,
+                    unit = "把",
+                    estimatedPrice = 850.0,
+                    expiryDays = null,
+                    tags = listOf("乐器影音", "艺术音乐"),
+                    storageTips = "木质乐器需维持合适温湿度，避免阳光直射与潮湿开裂。"
+                )
+            }
+            // 17. 汽车用品
+            listOf("玻璃水", "充气泵", "搭电线", "洗车机", "行车记录仪", "防冻液", "雨刮器", "车载").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "汽车用品",
+                    suggestedLocation = "汽车后备箱/车库储物架",
+                    quantity = 1,
+                    unit = "件",
+                    estimatedPrice = 95.0,
+                    expiryDays = 365,
+                    tags = listOf("汽车用品", "车载养护"),
+                    storageTips = "瓶装液体紧固瓶盖，应急电源定期关照电量。"
+                )
+            }
+            // 18. 模型收藏
+            listOf("高达", "手办", "盲盒", "喷笔", "模型漆", "展示盒", "二次元", "潮玩", "万代", "泡泡玛特").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "模型收藏",
+                    suggestedLocation = "书房/防尘展示柜",
+                    quantity = 1,
+                    unit = "个",
+                    estimatedPrice = 180.0,
+                    expiryDays = null,
+                    tags = listOf("模型潮玩", "极客收藏"),
+                    storageTips = "建议于亚克力防尘盒内展陈，避免阳光强射褪色。"
+                )
+            }
+            // 19. 家用电器
+            listOf("空气炸锅", "破壁机", "电饭煲", "咖啡机", "养生壶", "除湿机", "加湿器", "空气净化器", "净水器", "烤箱").any { lower.contains(it) } -> {
+                SingleItemRecognitionResult(
+                    name = itemName,
+                    category = "家用电器",
+                    suggestedLocation = "厨房/水吧台操作区",
+                    quantity = 1,
+                    unit = "台",
+                    estimatedPrice = 450.0,
+                    expiryDays = null,
+                    tags = listOf("家用电器", "生活品质"),
+                    storageTips = "使用后清洁水槽与油污，长期不用拔掉电源晾干再收纳。"
+                )
+            }
+            // 20. 文具书籍
             listOf("书", "笔", "本", "剪刀", "文件夹", "订书机", "印章", "文具", "便签", "打印纸", "画笔", "胶水").any { lower.contains(it) } -> {
                 SingleItemRecognitionResult(
                     name = itemName,
@@ -489,7 +587,7 @@ object LocalHeuristicEngine {
                     storageTips = "竖立摆放，方便快速查阅抽取。"
                 )
             }
-            // 14. 默认居家
+            // 21. 默认居家
             else -> {
                 SingleItemRecognitionResult(
                     name = itemName,
@@ -541,7 +639,14 @@ object LocalHeuristicEngine {
             "露营|野营|户外|徒步|烧烤" to listOf("帐篷", "睡袋", "折叠椅", "天幕", "手电", "保温箱", "防潮垫"),
             "办公|学习|开会|加班|书房" to listOf("笔记本", "笔", "电脑", "键盘", "鼠标", "打印纸", "文件夹", "显示器"),
             "化妆|美妆|护肤|约会|补妆" to listOf("口红", "面膜", "防晒", "精华", "香水", "粉底", "洗面奶"),
-            "diy|电子|电路|焊接|单片机|元器件|硬件|创客|折腾|极客" to listOf("电烙铁", "焊锡", "万用表", "芯片", "电阻", "电容", "杜邦线", "面包板", "esp32", "stm32", "arduino", "示波器", "热风枪", "3d打印机", "剥线钳", "螺丝盒", "开发板")
+            "diy|电子|电路|焊接|单片机|元器件|硬件|创客|折腾|极客" to listOf("电烙铁", "焊锡", "万用表", "芯片", "电阻", "电容", "杜邦线", "面包板", "esp32", "stm32", "arduino", "示波器", "热风枪", "3d打印机", "剥线钳", "螺丝盒", "开发板"),
+            "健身|运动|减肥|锻炼|肌肉|打球|跑步" to listOf("哑铃", "瑜伽垫", "跑步机", "筋膜枪", "蛋白粉", "跳绳", "羽毛球拍", "篮球", "足球"),
+            "打印|文印|盖章|发票|办公|塑封" to listOf("打印机", "墨盒", "硒鼓", "a4纸", "碎纸机", "塑封机", "印泥", "考勤机"),
+            "养花|种菜|园艺|绿植|浇花|盆栽|多肉" to listOf("洒水壶", "花盆", "营养土", "肥料", "修剪剪", "补光灯", "绿植", "多肉"),
+            "音乐|乐器|弹琴|唱歌|录音|黑胶|吉他" to listOf("吉他", "调音器", "电子琴", "钢琴", "尤克里里", "麦克风", "声卡", "黑胶唱片", "耳放"),
+            "开车|汽车|洗车|保修|车载|自驾|胎压" to listOf("玻璃水", "充气泵", "搭电线", "洗车机", "行车记录仪", "防冻液", "雨刮器"),
+            "高达|手办|盲盒|模型|喷漆|二次元|潮玩" to listOf("高达", "手办", "盲盒", "喷笔", "模型漆", "展示盒", "二次元"),
+            "做饭|家电|烘焙|榨汁|除湿|加湿|净化" to listOf("空气炸锅", "破壁机", "电饭煲", "咖啡机", "养生壶", "除湿机", "加湿器", "空气净化器")
         )
 
         val targetKeywords = mutableSetOf<String>()
@@ -588,215 +693,225 @@ object LocalHeuristicEngine {
         val result: SingleItemRecognitionResult
     )
 
-    val CATEGORY_WEIGHT_MATRIX: Map<String, List<CategoryTermWeight>> = mapOf(
-        "电子数码" to listOf(
-            CategoryTermWeight("手机", 1.5, "台", "书房/数码抽屉", defaultPrice = 3999.0, defaultTags = listOf("数码", "电子", "随身")),
-            CategoryTermWeight("iphone", 1.6, "台", "书房/数码抽屉", defaultPrice = 5999.0, defaultTags = listOf("苹果", "手机", "数码")),
-            CategoryTermWeight("苹果", 1.4, "台", "书房/数码抽屉", defaultPrice = 4999.0, defaultTags = listOf("Apple", "数码")),
-            CategoryTermWeight("华为", 1.4, "台", "书房/数码抽屉", defaultPrice = 3999.0, defaultTags = listOf("华为", "数码")),
-            CategoryTermWeight("小米", 1.3, "台", "书房/数码抽屉", defaultPrice = 1999.0, defaultTags = listOf("小米", "数码")),
-            CategoryTermWeight("充电器", 1.4, "个", "书房/数码收纳盒", defaultPrice = 79.0, defaultTags = listOf("快充", "配件")),
-            CategoryTermWeight("快充", 1.4, "个", "书房/数码收纳盒", defaultPrice = 99.0, defaultTags = listOf("充电", "配件")),
-            CategoryTermWeight("数据线", 1.3, "条", "书房/数码收纳盒", defaultPrice = 29.0, defaultTags = listOf("线材")),
-            CategoryTermWeight("充电宝", 1.4, "个", "玄关/随身包袋", defaultPrice = 129.0, defaultTags = listOf("移动电源", "便携")),
-            CategoryTermWeight("耳机", 1.4, "副", "书房/桌面", defaultPrice = 499.0, defaultTags = listOf("音频", "蓝牙")),
-            CategoryTermWeight("airpods", 1.6, "副", "书房/桌面", defaultPrice = 999.0, defaultTags = listOf("苹果", "耳机")),
-            CategoryTermWeight("电脑", 1.5, "台", "书房/办公桌", defaultPrice = 6999.0, defaultTags = listOf("办公", "电脑")),
-            CategoryTermWeight("笔记本", 1.4, "台", "书房/办公桌", defaultPrice = 5999.0, defaultTags = listOf("便携电脑")),
-            CategoryTermWeight("macbook", 1.6, "台", "书房/办公桌", defaultPrice = 8999.0, defaultTags = listOf("苹果", "笔记本")),
-            CategoryTermWeight("平板", 1.4, "台", "书房/数码柜", defaultPrice = 2999.0, defaultTags = listOf("平板", "娱乐")),
-            CategoryTermWeight("ipad", 1.6, "台", "书房/数码柜", defaultPrice = 3599.0, defaultTags = listOf("苹果", "平板")),
-            CategoryTermWeight("显示器", 1.3, "台", "书房/办公桌", defaultPrice = 1299.0, defaultTags = listOf("显示设备")),
-            CategoryTermWeight("键盘", 1.3, "把", "书房/办公桌", defaultPrice = 299.0, defaultTags = listOf("外设", "机械键盘")),
-            CategoryTermWeight("鼠标", 1.3, "个", "书房/办公桌", defaultPrice = 149.0, defaultTags = listOf("外设")),
-            CategoryTermWeight("罗技", 1.4, "个", "书房/办公桌", defaultPrice = 299.0, defaultTags = listOf("外设", "罗技")),
-            CategoryTermWeight("相机", 1.5, "台", "防潮箱/数码柜", defaultPrice = 8800.0, defaultTags = listOf("摄影", "单反")),
-            CategoryTermWeight("单反", 1.5, "台", "防潮箱/数码柜", defaultPrice = 9999.0, defaultTags = listOf("相机", "微单")),
-            CategoryTermWeight("镜头", 1.4, "支", "防潮箱/数码柜", defaultPrice = 4500.0, defaultTags = listOf("摄影镜头")),
-            CategoryTermWeight("无人机", 1.5, "架", "防潮箱/露营箱", defaultPrice = 3999.0, defaultTags = listOf("大疆", "航拍")),
-            CategoryTermWeight("大疆", 1.5, "个", "防潮箱/数码柜", defaultPrice = 2999.0, defaultTags = listOf("DJI", "云台")),
-            CategoryTermWeight("switch", 1.5, "台", "客厅/电视柜", defaultPrice = 1899.0, defaultTags = listOf("任天堂", "游戏机")),
-            CategoryTermWeight("ps5", 1.5, "台", "客厅/电视柜", defaultPrice = 3599.0, defaultTags = listOf("索尼", "主机")),
-            CategoryTermWeight("音响", 1.2, "台", "客厅/电视柜", defaultPrice = 399.0, defaultTags = listOf("影音", "蓝牙")),
-            CategoryTermWeight("路由器", 1.3, "台", "客厅/电视柜", defaultPrice = 299.0, defaultTags = listOf("网络", "WiFi")),
-            CategoryTermWeight("硬盘", 1.3, "个", "书房/数码盒", defaultPrice = 499.0, defaultTags = listOf("存储", "移动硬盘")),
-            CategoryTermWeight("u盘", 1.3, "个", "书房/数码盒", defaultPrice = 59.0, defaultTags = listOf("存储")),
-            CategoryTermWeight("电池", 1.2, "节", "抽屉/备用盒", defaultPrice = 15.0, defaultTags = listOf("耗材")),
-            CategoryTermWeight("插座", 1.1, "个", "墙边/桌面", defaultPrice = 45.0, defaultTags = listOf("插排", "电工"))
-        ),
-        "药品个护" to listOf(
-            CategoryTermWeight("创可贴", 1.5, "盒", "家庭医药箱", defaultExpiryDays = 365, defaultPrice = 12.0, defaultTags = listOf("急救", "外用")),
-            CategoryTermWeight("感冒药", 1.4, "盒", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 25.0, defaultTags = listOf("内服", "药品")),
-            CategoryTermWeight("消炎药", 1.4, "盒", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 32.0, defaultTags = listOf("处方药")),
-            CategoryTermWeight("退烧药", 1.4, "盒", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 28.0, defaultTags = listOf("应急药品")),
-            CategoryTermWeight("布洛芬", 1.5, "盒", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 22.0, defaultTags = listOf("止痛退烧")),
-            CategoryTermWeight("泰诺", 1.4, "盒", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 26.0, defaultTags = listOf("感冒用药")),
-            CategoryTermWeight("棉签", 1.2, "包", "家庭医药箱", defaultExpiryDays = 365, defaultPrice = 8.0, defaultTags = listOf("卫生")),
-            CategoryTermWeight("碘伏", 1.3, "瓶", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 15.0, defaultTags = listOf("消毒")),
-            CategoryTermWeight("眼药水", 1.4, "支", "家庭医药箱", defaultExpiryDays = 30, defaultPrice = 35.0, defaultTags = listOf("眼部护理")),
-            CategoryTermWeight("口罩", 1.2, "包", "玄关/口罩盒", defaultExpiryDays = 365, defaultPrice = 20.0, defaultTags = listOf("防护", "医用")),
-            CategoryTermWeight("体温计", 1.4, "支", "家庭医药箱", defaultPrice = 45.0, defaultTags = listOf("医疗器械")),
-            CategoryTermWeight("血压计", 1.4, "台", "父母房/医药柜", defaultPrice = 220.0, defaultTags = listOf("健康监测")),
-            CategoryTermWeight("湿巾", 1.1, "包", "客厅/抽屉", defaultExpiryDays = 180, defaultPrice = 12.0, defaultTags = listOf("清洁")),
-            CategoryTermWeight("维生素", 1.3, "瓶", "餐桌/医药箱", defaultExpiryDays = 180, defaultPrice = 88.0, defaultTags = listOf("保健")),
-            CategoryTermWeight("钙片", 1.3, "瓶", "餐桌/医药箱", defaultExpiryDays = 180, defaultPrice = 65.0, defaultTags = listOf("膳食补充")),
-            CategoryTermWeight("膏药", 1.2, "贴", "家庭医药箱", defaultExpiryDays = 180, defaultPrice = 30.0, defaultTags = listOf("外用", "止痛")),
-            CategoryTermWeight("电动牙刷", 1.4, "支", "卫生间/洗手台", defaultPrice = 199.0, defaultTags = listOf("口腔护理")),
-            CategoryTermWeight("牙膏", 1.2, "支", "卫生间/洗手台", defaultExpiryDays = 365, defaultPrice = 18.0, defaultTags = listOf("清洁")),
-            CategoryTermWeight("洗发水", 1.3, "瓶", "卫生间/置物架", defaultExpiryDays = 365, defaultPrice = 58.0, defaultTags = listOf("洗护")),
-            CategoryTermWeight("沐浴露", 1.3, "瓶", "卫生间/置物架", defaultExpiryDays = 365, defaultPrice = 48.0, defaultTags = listOf("身体清洁"))
-        ),
-        "食品饮料" to listOf(
-            CategoryTermWeight("酱油", 1.4, "瓶", "厨房/调味品架", defaultExpiryDays = 180, defaultPrice = 16.8, defaultTags = listOf("调味品")),
-            CategoryTermWeight("海天", 1.3, "瓶", "厨房/调味品架", defaultExpiryDays = 180, defaultPrice = 15.0, defaultTags = listOf("调料")),
-            CategoryTermWeight("生抽", 1.4, "瓶", "厨房/调味品架", defaultExpiryDays = 180, defaultPrice = 14.5, defaultTags = listOf("调味酱油")),
-            CategoryTermWeight("老抽", 1.4, "瓶", "厨房/调味品架", defaultExpiryDays = 180, defaultPrice = 14.5, defaultTags = listOf("上色酱油")),
-            CategoryTermWeight("醋", 1.3, "瓶", "厨房/调味品架", defaultExpiryDays = 180, defaultPrice = 12.0, defaultTags = listOf("调味品")),
-            CategoryTermWeight("食用油", 1.4, "桶", "厨房/灶台下", defaultExpiryDays = 180, defaultPrice = 89.0, defaultTags = listOf("粮油")),
-            CategoryTermWeight("橄榄油", 1.4, "瓶", "厨房/调味品架", defaultExpiryDays = 180, defaultPrice = 120.0, defaultTags = listOf("健康食用油")),
-            CategoryTermWeight("牛奶", 1.4, "箱", "厨房/冰箱/常温角", defaultExpiryDays = 30, defaultPrice = 55.0, defaultTags = listOf("乳制品")),
-            CategoryTermWeight("酸奶", 1.4, "组", "厨房/冰箱冷藏", defaultExpiryDays = 21, defaultPrice = 28.0, defaultTags = listOf("冷藏乳品")),
-            CategoryTermWeight("咖啡", 1.3, "盒", "茶水间/咖啡柜", defaultExpiryDays = 180, defaultPrice = 68.0, defaultTags = listOf("冲饮", "提神")),
-            CategoryTermWeight("咖啡豆", 1.4, "袋", "茶水间/咖啡柜", defaultExpiryDays = 90, defaultPrice = 85.0, defaultTags = listOf("精品咖啡")),
-            CategoryTermWeight("茶叶", 1.3, "罐", "客厅/茶台", defaultExpiryDays = 365, defaultPrice = 180.0, defaultTags = listOf("茶饮")),
-            CategoryTermWeight("绿茶", 1.3, "罐", "客厅/茶台", defaultExpiryDays = 180, defaultPrice = 120.0, defaultTags = listOf("茶叶")),
-            CategoryTermWeight("零食", 1.2, "袋", "客厅/零食箱", defaultExpiryDays = 90, defaultPrice = 15.0, defaultTags = listOf("休闲食品")),
-            CategoryTermWeight("坚果", 1.3, "盒", "客厅/茶几", defaultExpiryDays = 120, defaultPrice = 98.0, defaultTags = listOf("健康零食")),
-            CategoryTermWeight("饼干", 1.2, "盒", "客厅/零食箱", defaultExpiryDays = 90, defaultPrice = 18.0, defaultTags = listOf("点心")),
-            CategoryTermWeight("方便面", 1.3, "桶", "厨房/储物柜", defaultExpiryDays = 120, defaultPrice = 6.5, defaultTags = listOf("速食")),
-            CategoryTermWeight("麦片", 1.2, "袋", "厨房/储物柜", defaultExpiryDays = 180, defaultPrice = 35.0, defaultTags = listOf("早餐冲饮")),
-            CategoryTermWeight("蜂蜜", 1.3, "罐", "餐边柜", defaultExpiryDays = 365, defaultPrice = 75.0, defaultTags = listOf("甜品")),
-            CategoryTermWeight("可口可乐", 1.4, "箱", "厨房/阳台置物架", defaultExpiryDays = 180, defaultPrice = 38.0, defaultTags = listOf("碳酸饮料")),
-            CategoryTermWeight("白酒", 1.3, "瓶", "餐边柜/酒柜", defaultExpiryDays = 365, defaultPrice = 399.0, defaultTags = listOf("酒水")),
-            CategoryTermWeight("红酒", 1.3, "瓶", "酒柜", defaultExpiryDays = 365, defaultPrice = 188.0, defaultTags = listOf("葡萄酒"))
-        ),
-        "母婴亲子" to listOf(
-            CategoryTermWeight("尿不湿", 1.5, "包", "婴儿房/储物柜", defaultPrice = 128.0, defaultTags = listOf("母婴", "纸尿裤")),
-            CategoryTermWeight("纸尿裤", 1.5, "包", "婴儿房/储物柜", defaultPrice = 138.0, defaultTags = listOf("婴儿护理")),
-            CategoryTermWeight("奶粉", 1.5, "罐", "餐边柜/奶粉台", defaultExpiryDays = 30, defaultPrice = 280.0, defaultTags = listOf("婴幼儿配方")),
-            CategoryTermWeight("奶瓶", 1.4, "个", "厨房/消毒柜", defaultPrice = 89.0, defaultTags = listOf("喂养用品")),
-            CategoryTermWeight("吸奶器", 1.4, "台", "主卧/抽屉", defaultPrice = 399.0, defaultTags = listOf("母婴")),
-            CategoryTermWeight("安抚奶嘴", 1.3, "个", "婴儿床头柜", defaultPrice = 35.0, defaultTags = listOf("育儿")),
-            CategoryTermWeight("儿童玩具", 1.3, "件", "儿童房/玩具箱", defaultPrice = 68.0, defaultTags = listOf("玩具", "益智")),
-            CategoryTermWeight("乐高", 1.5, "盒", "儿童房/积木柜", defaultPrice = 299.0, defaultTags = listOf("LEGO", "拼插积木")),
-            CategoryTermWeight("婴儿湿巾", 1.3, "包", "婴儿房/抽屉", defaultExpiryDays = 180, defaultPrice = 25.0, defaultTags = listOf("温和清洁"))
-        ),
-        "宠物用品" to listOf(
-            CategoryTermWeight("猫粮", 1.5, "袋", "阳台/宠物储粮桶", defaultExpiryDays = 90, defaultPrice = 168.0, defaultTags = listOf("猫咪主粮")),
-            CategoryTermWeight("狗粮", 1.5, "袋", "阳台/宠物储粮桶", defaultExpiryDays = 90, defaultPrice = 188.0, defaultTags = listOf("狗狗主粮")),
-            CategoryTermWeight("猫砂", 1.4, "袋", "阳台/猫砂盆旁", defaultPrice = 45.0, defaultTags = listOf("猫咪耗材")),
-            CategoryTermWeight("猫罐头", 1.4, "罐", "阳台/宠物柜", defaultExpiryDays = 180, defaultPrice = 12.0, defaultTags = listOf("湿粮罐头")),
-            CategoryTermWeight("宠物玩具", 1.2, "个", "客厅/宠物玩具箱", defaultPrice = 28.0, defaultTags = listOf("宠物互动")),
-            CategoryTermWeight("牵引绳", 1.3, "条", "玄关/挂钩", defaultPrice = 55.0, defaultTags = listOf("遛狗装备"))
-        ),
-        "服饰箱包" to listOf(
-            CategoryTermWeight("外套", 1.3, "件", "主卧/衣柜", defaultPrice = 350.0, defaultTags = listOf("保暖", "服饰")),
-            CategoryTermWeight("羽绒服", 1.4, "件", "主卧/衣柜防尘袋", defaultPrice = 880.0, defaultTags = listOf("冬装")),
-            CategoryTermWeight("裤子", 1.3, "条", "主卧/衣柜", defaultPrice = 180.0, defaultTags = listOf("下装")),
-            CategoryTermWeight("牛仔裤", 1.3, "条", "主卧/衣柜", defaultPrice = 220.0, defaultTags = listOf("百搭")),
-            CategoryTermWeight("衬衫", 1.2, "件", "主卧/衣柜", defaultPrice = 190.0, defaultTags = listOf("上衣")),
-            CategoryTermWeight("鞋子", 1.3, "双", "玄关/鞋柜", defaultPrice = 399.0, defaultTags = listOf("鞋履")),
-            CategoryTermWeight("运动鞋", 1.4, "双", "玄关/鞋柜", defaultPrice = 499.0, defaultTags = listOf("耐克", "阿迪")),
-            CategoryTermWeight("袜子", 1.1, "双", "主卧/抽屉", defaultPrice = 10.0, defaultTags = listOf("贴身")),
-            CategoryTermWeight("行李箱", 1.4, "个", "储物间/顶柜", defaultPrice = 399.0, defaultTags = listOf("出行", "拉杆箱")),
-            CategoryTermWeight("包包", 1.3, "个", "玄关/包包挂钩", defaultPrice = 580.0, defaultTags = listOf("配件")),
-            CategoryTermWeight("围巾", 1.2, "条", "主卧/抽屉", defaultPrice = 120.0, defaultTags = listOf("防寒配件")),
-            CategoryTermWeight("皮带", 1.2, "条", "主卧/抽屉", defaultPrice = 150.0, defaultTags = listOf("配饰"))
-        ),
-        "美妆护肤" to listOf(
-            CategoryTermWeight("口红", 1.4, "支", "梳妆台/彩妆盒", defaultExpiryDays = 365, defaultPrice = 280.0, defaultTags = listOf("彩妆")),
-            CategoryTermWeight("面膜", 1.3, "盒", "梳妆台/抽屉", defaultExpiryDays = 180, defaultPrice = 99.0, defaultTags = listOf("护肤")),
-            CategoryTermWeight("防晒霜", 1.4, "瓶", "玄关/梳妆台", defaultExpiryDays = 180, defaultPrice = 168.0, defaultTags = listOf("防晒护肤")),
-            CategoryTermWeight("安热沙", 1.5, "瓶", "梳妆台", defaultExpiryDays = 180, defaultPrice = 198.0, defaultTags = listOf("防晒")),
-            CategoryTermWeight("精华", 1.3, "瓶", "梳妆台", defaultExpiryDays = 180, defaultPrice = 580.0, defaultTags = listOf("护肤")),
-            CategoryTermWeight("雅诗兰黛", 1.5, "瓶", "梳妆台", defaultExpiryDays = 180, defaultPrice = 850.0, defaultTags = listOf("大牌护肤")),
-            CategoryTermWeight("面霜", 1.3, "瓶", "梳妆台", defaultExpiryDays = 180, defaultPrice = 320.0, defaultTags = listOf("保湿")),
-            CategoryTermWeight("洗面奶", 1.3, "支", "卫生间/洗手台", defaultExpiryDays = 180, defaultPrice = 88.0, defaultTags = listOf("洁面")),
-            CategoryTermWeight("香水", 1.4, "瓶", "梳妆台", defaultExpiryDays = 730, defaultPrice = 680.0, defaultTags = listOf("香氛")),
-            CategoryTermWeight("粉底液", 1.3, "盒", "梳妆台/彩妆盒", defaultExpiryDays = 365, defaultPrice = 380.0, defaultTags = listOf("底妆"))
-        ),
-        "工具五金" to listOf(
-            CategoryTermWeight("螺丝刀", 1.4, "把", "玄关/工具箱", defaultPrice = 15.0, defaultTags = listOf("常用工具")),
-            CategoryTermWeight("扳手", 1.3, "把", "玄关/工具箱", defaultPrice = 25.0, defaultTags = listOf("五金")),
-            CategoryTermWeight("锤子", 1.3, "把", "玄关/工具箱", defaultPrice = 20.0, defaultTags = listOf("工具")),
-            CategoryTermWeight("钳子", 1.3, "把", "玄关/工具箱", defaultPrice = 22.0, defaultTags = listOf("工具")),
-            CategoryTermWeight("电钻", 1.5, "台", "阳台/工具柜", defaultPrice = 250.0, defaultTags = listOf("电动工具")),
-            CategoryTermWeight("卷尺", 1.2, "个", "抽屉/工具盒", defaultPrice = 12.0, defaultTags = listOf("测量")),
-            CategoryTermWeight("胶带", 1.1, "卷", "抽屉/杂物盒", defaultPrice = 5.0, defaultTags = listOf("耗材")),
-            CategoryTermWeight("美工刀", 1.2, "把", "抽屉/工具盒", defaultPrice = 8.0, defaultTags = listOf("切割工具")),
-            CategoryTermWeight("焊台", 1.6, "台", "工作台/焊接区", defaultPrice = 280.0, defaultTags = listOf("恒温焊台", "DIY工具")),
-            CategoryTermWeight("电烙铁", 1.5, "把", "工作台/焊接区", defaultPrice = 45.0, defaultTags = listOf("焊接工具", "硬件DIY")),
-            CategoryTermWeight("焊锡", 1.4, "卷", "工作台/焊接区", defaultPrice = 35.0, defaultTags = listOf("焊锡丝", "助焊剂")),
-            CategoryTermWeight("热风枪", 1.5, "台", "工作台/焊接区", defaultPrice = 160.0, defaultTags = listOf("拆焊热风枪", "焊接")),
-            CategoryTermWeight("万用表", 1.6, "台", "工作台/测试架", defaultPrice = 120.0, defaultTags = listOf("数字万用表", "测试仪器")),
-            CategoryTermWeight("示波器", 1.6, "台", "工作台/测试架", defaultPrice = 1280.0, defaultTags = listOf("波形分析", "极客装备")),
-            CategoryTermWeight("逻辑分析仪", 1.5, "个", "工作台/测试架", defaultPrice = 65.0, defaultTags = listOf("信号抓包", "调试仪器")),
-            CategoryTermWeight("可调电源", 1.5, "台", "工作台/电源角", defaultPrice = 220.0, defaultTags = listOf("直流稳压电源", "供电")),
-            CategoryTermWeight("3d打印机", 1.6, "台", "工作室/3D打印区", defaultPrice = 1999.0, defaultTags = listOf("3D打印", "创客", "拓竹")),
-            CategoryTermWeight("pla耗材", 1.4, "卷", "工作室/耗材架", defaultPrice = 60.0, defaultTags = listOf("3D打印耗材", "PLA")),
-            CategoryTermWeight("剥线钳", 1.4, "把", "工作室/洞洞板", defaultPrice = 28.0, defaultTags = listOf("线缆工具", "压线钳")),
-            CategoryTermWeight("镊子", 1.3, "把", "工作台/贴片区", defaultPrice = 12.0, defaultTags = listOf("防静电镊子", "精密"))
-        ),
-        "电子元器件" to listOf(
-            CategoryTermWeight("电阻", 1.5, "盒", "工作室/元器件盒", defaultPrice = 15.0, defaultTags = listOf("贴片电阻", "电子元器件", "被动元件")),
-            CategoryTermWeight("电容", 1.5, "盒", "工作室/元器件盒", defaultPrice = 20.0, defaultTags = listOf("电解电容", "贴片电容", "被动元件")),
-            CategoryTermWeight("二极管", 1.5, "包", "工作室/元器件盒", defaultPrice = 12.0, defaultTags = listOf("LED", "二极管", "发光管")),
-            CategoryTermWeight("三极管", 1.5, "包", "工作室/元器件盒", defaultPrice = 18.0, defaultTags = listOf("晶体管", "MOSFET")),
-            CategoryTermWeight("芯片", 1.6, "片", "工作室/防静电芯片盒", defaultPrice = 35.0, defaultTags = listOf("IC", "集成电路", "芯片")),
-            CategoryTermWeight("单片机", 1.6, "块", "工作室/开发板柜", defaultPrice = 25.0, defaultTags = listOf("MCU", "嵌入式")),
-            CategoryTermWeight("stm32", 1.6, "块", "工作室/开发板柜", defaultPrice = 18.0, defaultTags = listOf("STM32", "单片机", "核心板")),
-            CategoryTermWeight("esp32", 1.6, "块", "工作室/开发板柜", defaultPrice = 22.0, defaultTags = listOf("ESP32", "WiFi蓝牙", "物联网")),
-            CategoryTermWeight("arduino", 1.6, "块", "工作室/开源硬件盒", defaultPrice = 30.0, defaultTags = listOf("Arduino", "开源硬件")),
-            CategoryTermWeight("树莓派", 1.6, "台", "工作室/开源硬件盒", defaultPrice = 380.0, defaultTags = listOf("Raspberry Pi", "Linux卡片机")),
-            CategoryTermWeight("传感器", 1.5, "个", "工作室/传感器盒", defaultPrice = 15.0, defaultTags = listOf("温湿度", "超声波", "模组")),
-            CategoryTermWeight("开发板", 1.5, "块", "工作室/开发板柜", defaultPrice = 45.0, defaultTags = listOf("嵌入式", "实验板")),
-            CategoryTermWeight("面包板", 1.4, "块", "工作室/原型测试台", defaultPrice = 8.0, defaultTags = listOf("无焊面包板", "电路原型")),
-            CategoryTermWeight("杜邦线", 1.4, "扎", "工作室/线材盒", defaultPrice = 10.0, defaultTags = listOf("公母线", "连接线")),
-            CategoryTermWeight("pcb板", 1.5, "张", "工作室/PCB样板盒", defaultPrice = 15.0, defaultTags = listOf("万用板", "洞洞板")),
-            CategoryTermWeight("继电器", 1.4, "个", "工作室/模组盒", defaultPrice = 8.0, defaultTags = listOf("控制模组", "继电器")),
-            CategoryTermWeight("步进电机", 1.4, "个", "工作室/电机零件箱", defaultPrice = 28.0, defaultTags = listOf("电机", "驱动零件"))
-        ),
-        "重要证件" to listOf(
-            CategoryTermWeight("身份证", 1.6, "张", "主卧/保险箱/文件袋", defaultPrice = 0.0, defaultTags = listOf("核心证件")),
-            CategoryTermWeight("护照", 1.6, "本", "主卧/文件收纳袋", defaultPrice = 0.0, defaultTags = listOf("出国证件")),
-            CategoryTermWeight("户口本", 1.6, "本", "主卧/保险箱", defaultPrice = 0.0, defaultTags = listOf("重要户籍")),
-            CategoryTermWeight("房产证", 1.6, "本", "主卧/保险箱", defaultPrice = 0.0, defaultTags = listOf("资产凭证")),
-            CategoryTermWeight("驾驶证", 1.5, "本", "随身包/文件袋", defaultPrice = 0.0, defaultTags = listOf("驾驶证件")),
-            CategoryTermWeight("驾照", 1.5, "本", "随身包/文件袋", defaultPrice = 0.0, defaultTags = listOf("驾驶证件")),
-            CategoryTermWeight("银行卡", 1.4, "张", "卡包/保险箱", defaultPrice = 0.0, defaultTags = listOf("金融卡片")),
-            CategoryTermWeight("合同", 1.4, "份", "书房/文件盒", defaultPrice = 0.0, defaultTags = listOf("法律凭证")),
-            CategoryTermWeight("钥匙", 1.3, "把", "玄关/钥匙盘", defaultPrice = 20.0, defaultTags = listOf("日常随身"))
-        ),
-        "文具书籍" to listOf(
-            CategoryTermWeight("笔记本", 1.2, "本", "书房/办公桌", defaultPrice = 18.0, defaultTags = listOf("文具")),
-            CategoryTermWeight("书", 1.2, "本", "书房/书架", defaultPrice = 45.0, defaultTags = listOf("阅读")),
-            CategoryTermWeight("笔", 1.2, "支", "书房/笔筒", defaultPrice = 3.0, defaultTags = listOf("书写")),
-            CategoryTermWeight("文件夹", 1.2, "个", "书房/抽屉", defaultPrice = 15.0, defaultTags = listOf("办公整理")),
-            CategoryTermWeight("剪刀", 1.1, "把", "书房/笔筒", defaultPrice = 12.0, defaultTags = listOf("办公文具"))
-        ),
-        "户外露营" to listOf(
-            CategoryTermWeight("帐篷", 1.5, "顶", "阳台/露营储物箱", defaultPrice = 499.0, defaultTags = listOf("露营装备")),
-            CategoryTermWeight("睡袋", 1.4, "个", "阳台/储物柜", defaultPrice = 180.0, defaultTags = listOf("户外保温")),
-            CategoryTermWeight("折叠椅", 1.3, "把", "后备箱/露营箱", defaultPrice = 89.0, defaultTags = listOf("户外家具")),
-            CategoryTermWeight("天幕", 1.4, "顶", "露营储物箱", defaultPrice = 299.0, defaultTags = listOf("遮阳")),
-            CategoryTermWeight("户外手电", 1.3, "个", "阳台/应急箱", defaultPrice = 65.0, defaultTags = listOf("照明", "应急"))
-        ),
-        "日常居家" to listOf(
-            CategoryTermWeight("抽纸", 1.2, "提", "客厅/茶几", defaultPrice = 22.0, defaultTags = listOf("日用耗材")),
-            CategoryTermWeight("纸巾", 1.2, "提", "客厅/茶几", defaultPrice = 20.0, defaultTags = listOf("日用耗材")),
-            CategoryTermWeight("保温杯", 1.3, "个", "厨房/餐边柜", defaultPrice = 129.0, defaultTags = listOf("饮具")),
-            CategoryTermWeight("毛巾", 1.1, "条", "卫生间/毛巾架", defaultPrice = 25.0, defaultTags = listOf("洗漱")),
-            CategoryTermWeight("垃圾袋", 1.1, "卷", "厨房/水槽下", defaultPrice = 12.0, defaultTags = listOf("清洁")),
-            CategoryTermWeight("洗衣液", 1.2, "瓶", "阳台/洗衣台", defaultExpiryDays = 365, defaultPrice = 39.0, defaultTags = listOf("洗涤用品")),
-            CategoryTermWeight("扫地机器人", 1.5, "台", "客厅/充电座", defaultPrice = 2499.0, defaultTags = listOf("智能家电")),
-            CategoryTermWeight("戴森", 1.5, "台", "客厅/电磁架", defaultPrice = 2999.0, defaultTags = listOf("Dyson", "吸尘器"))
-        )
+    val CATEGORY_WEIGHT_MATRIX: Map<String, List<CategoryTermWeight>> by lazy {
+        LocalFullDomainDatabase.getAllCategoryWeightMatrix()
+    }
+
+    data class BrandInfo(
+        val canonicalBrand: String,
+        val aliases: List<String>,
+        val category: String,
+        val defaultLocation: String
     )
+
+    val BRAND_ALIAS_MAP: List<BrandInfo> = listOf(
+        // === 半导体、MCU与元器件原厂 ===
+        BrandInfo("STMicroelectronics", listOf("意法半导体", "stm32", "stm32f103", "stm32f407", "stm32h7", "st-link"), "电子元器件", "工作室/单片机核心板柜"),
+        BrandInfo("Espressif", listOf("乐鑫", "esp32", "esp32-s3", "esp32-c3", "esp8266", "esp-idf"), "电子元器件", "工作室/物联网模组柜"),
+        BrandInfo("Raspberry Pi", listOf("树莓派", "raspberry pi", "rpi", "rp2040", "pico", "pico w"), "电子元器件", "工作室/单板微电脑柜"),
+        BrandInfo("Arduino", listOf("arduino", "uno", "nano", "mega2560", "atmega328p"), "电子元器件", "工作室/开源硬件展架"),
+        BrandInfo("Texas Instruments", listOf("德州仪器", "ti", "ne555", "lm358", "tl082", "ads1115", "tpa3116"), "电子元器件", "工作室/IC防静电柜"),
+        BrandInfo("Microchip", listOf("微芯", "pic单片机", "atmel", "attiny85", "at24c02"), "电子元器件", "工作室/IC防静电柜"),
+        BrandInfo("Analog Devices", listOf("亚德诺", "adi", "ad620", "ad9850"), "电子元器件", "工作室/IC防静电柜"),
+        BrandInfo("WCH", listOf("沁恒", "ch340", "ch340g", "ch340c", "ch32v307", "ch552"), "电子元器件", "工作室/IC防静电柜"),
+        BrandInfo("Quectel", listOf("移远", "ec20", "ec200u", "ec800"), "电子元器件", "工作室/无线射频柜"),
+        BrandInfo("Waveshare", listOf("微雪电子", "微雪", "waveshare", "墨水屏"), "电子元器件", "工作室/显示屏收纳盒"),
+        BrandInfo("Seeed Studio", listOf("矽递", "seeed", "xiao"), "电子元器件", "工作室/开源硬件展架"),
+        BrandInfo("DFRobot", listOf("dfrobot", "哈士奇传感器"), "电子元器件", "工作室/传感器模组柜"),
+
+        // === 3D打印、数控与创客装备 ===
+        BrandInfo("Bambu Lab", listOf("拓竹", "bambu", "bambu lab", "x1c", "p1s", "a1", "a1mini", "ams"), "工具五金", "工作室/3D打印区"),
+        BrandInfo("Creality", listOf("创想三维", "creality", "ender", "k1 max"), "工具五金", "工作室/3D打印区"),
+        BrandInfo("Elegoo", listOf("爱乐酷", "elegoo", "neptune", "mars"), "工具五金", "工作室/3D打印区"),
+        BrandInfo("Anycubic", listOf("纵维立方", "anycubic", "kobra", "photon"), "工具五金", "工作室/3D打印区"),
+        BrandInfo("eSUN", listOf("易生", "esun", "pla+", "petg"), "工具五金", "工作室/3D耗材架"),
+
+        // === 测量仪器与测试设备 ===
+        BrandInfo("Fluke", listOf("福禄克", "fluke", "f15b+", "f17b+"), "工具五金", "工作台/仪器架"),
+        BrandInfo("RIGOL", listOf("普源", "rigol", "ds1054z", "dho804"), "工具五金", "工作台/仪器架"),
+        BrandInfo("Siglent", listOf("鼎阳", "siglent", "sds1104x"), "工具五金", "工作台/仪器架"),
+        BrandInfo("UNI-T", listOf("优利德", "uni-t", "ut61e"), "工具五金", "工作台/仪器架"),
+        BrandInfo("Saleae", listOf("saleae", "逻辑分析仪"), "工具五金", "工作台/仪器架"),
+        BrandInfo("Hantek", listOf("汉泰", "hantek"), "工具五金", "工作台/仪器架"),
+        BrandInfo("JBC", listOf("jbc", "c245", "c210"), "工具五金", "工作台/焊接操作区"),
+        BrandInfo("Hakko", listOf("白光", "hakko", "t12", "fx-888d"), "工具五金", "工作台/焊接操作区"),
+
+        // === 精密五金与电动工具 ===
+        BrandInfo("Wiha", listOf("wiha", "威汉", "米家wiha"), "工具五金", "工作台/装配抽屉"),
+        BrandInfo("Wera", listOf("wera", "维拉"), "工具五金", "工作台/装配抽屉"),
+        BrandInfo("Pro'sKit", listOf("宝工", "pro'skit", "宝工剥线钳"), "工具五金", "工作台/工具挂架"),
+        BrandInfo("SATA", listOf("世达", "sata"), "工具五金", "工作室/重型工具柜"),
+        BrandInfo("Stanley", listOf("史丹利", "stanley"), "工具五金", "工作室/重型工具柜"),
+        BrandInfo("Bosch", listOf("博世", "bosch", "博世电钻", "go2"), "工具五金", "工作室/重型工具柜"),
+        BrandInfo("Makita", listOf("牧田", "makita", "牧田起子机"), "工具五金", "工作室/重型工具柜"),
+        BrandInfo("DeWalt", listOf("得伟", "dewalt"), "工具五金", "工作室/重型工具柜"),
+        BrandInfo("Dremel", listOf("琢美", "dremel", "电磨机"), "工具五金", "工作室/机械加工区"),
+        BrandInfo("Loctite", listOf("乐泰", "loctite", "242螺丝胶"), "工具五金", "工作台/胶水盒"),
+        BrandInfo("3M", listOf("3m", "3m口罩", "3m胶带", "3m面罩"), "工业劳保", "工作室/防护劳保架"),
+
+        // === 消费电子与数码影音 ===
+        BrandInfo("Apple", listOf("苹果", "iphone", "ipad", "macbook", "airpods", "apple watch", "iwatch", "vision pro"), "电子数码", "书房/数码抽屉"),
+        BrandInfo("DJI", listOf("大疆", "御", "mavic", "action", "pocket", "灵眸", "osmo", "dji mic"), "电子数码", "防潮箱/数码柜"),
+        BrandInfo("Sony", listOf("索尼", "ps5", "playstation", "a7m4", "a7r5", "wh1000xm", "linkbuds"), "电子数码", "客厅/电视柜"),
+        BrandInfo("Nintendo", listOf("任天堂", "switch", "ns", "塞尔达"), "电子数码", "客厅/电视柜"),
+        BrandInfo("Huawei", listOf("华为", "mate", "pura", "鸿蒙", "harmonyos", "华为手环"), "电子数码", "书房/数码抽屉"),
+        BrandInfo("Xiaomi", listOf("小米", "米家", "红米", "redmi", "hyperos"), "电子数码", "书房/数码抽屉"),
+        BrandInfo("Logitech", listOf("罗技", "mx master", "gpro", "g502"), "电子数码", "书房/办公桌"),
+        BrandInfo("Anker", listOf("安克", "anker", "soundcore"), "电子数码", "书房/数码收纳盒"),
+        BrandInfo("UGreen", listOf("绿联", "ugreen", "绿联私有云"), "电子数码", "书房/数码收纳盒"),
+        BrandInfo("Baseus", listOf("倍思", "baseus"), "电子数码", "书房/数码收纳盒"),
+
+        // === 乐器影音与发烧 HiFi ===
+        BrandInfo("Yamaha", listOf("雅马哈", "yamaha"), "乐器影音", "客厅/乐器立架"),
+        BrandInfo("Roland", listOf("罗兰", "roland"), "乐器影音", "书房/音乐角"),
+        BrandInfo("Audio-Technica", listOf("铁三角", "audio-technica", "at2020"), "乐器影音", "工作台/录音架"),
+        BrandInfo("Focusrite", listOf("福克斯特", "focusrite", "scarlett"), "乐器影音", "工作台/音频机架"),
+        BrandInfo("Sennheiser", listOf("森海塞尔", "sennheiser", "hd600"), "乐器影音", "书房/音乐角"),
+
+        // === 美妆护肤、母婴与生活名品 ===
+        BrandInfo("Estee Lauder", listOf("雅诗兰黛", "小棕瓶"), "美妆护肤", "卧室/梳妆台"),
+        BrandInfo("SK-II", listOf("sk2", "skii", "神仙水"), "美妆护肤", "卧室/梳妆台"),
+        BrandInfo("Lancome", listOf("兰蔻", "小黑瓶"), "美妆护肤", "卧室/梳妆台"),
+        BrandInfo("La Mer", listOf("海蓝之谜", "lamer"), "美妆护肤", "卧室/梳妆台"),
+        BrandInfo("Anessa", listOf("安热沙", "安耐晒"), "美妆护肤", "玄关/梳妆台"),
+        BrandInfo("Dior", listOf("迪奥", "dior", "烈艳蓝金"), "美妆护肤", "卧室/彩妆收纳盒"),
+        BrandInfo("Armani", listOf("阿玛尼", "armani"), "美妆护肤", "卧室/彩妆收纳盒"),
+        BrandInfo("Chanel", listOf("香奈儿", "chanel", "蔚蓝"), "美妆护肤", "卧室/梳妆台"),
+        BrandInfo("Merries", listOf("花王", "妙而舒"), "母婴亲子", "婴儿房/尿布储物柜"),
+        BrandInfo("Aptamil", listOf("爱他美", "卓萃"), "母婴亲子", "餐边柜/冲奶台"),
+        BrandInfo("Pigeon", listOf("贝亲", "pigeon"), "母婴亲子", "厨房/奶瓶消毒柜"),
+        BrandInfo("Medela", listOf("美德乐", "medela"), "母婴亲子", "主卧/母婴抽屉"),
+        BrandInfo("Lego", listOf("乐高", "lego"), "母婴亲子", "儿童房/积木玩具柜"),
+        BrandInfo("Orijen", listOf("渴望", "orijen", "渴望六种鱼"), "宠物用品", "阳台/宠物储粮桶"),
+        BrandInfo("Pure&Natural", listOf("伯纳天纯"), "宠物用品", "阳台/宠物储粮桶"),
+        BrandInfo("Naturehike", listOf("挪客", "naturehike"), "户外露营", "阳台/露营储物箱"),
+        BrandInfo("Yonex", listOf("尤尼克斯", "yonex"), "运动健身", "玄关/运动拍包"),
+        BrandInfo("Spalding", listOf("斯伯丁", "spalding"), "运动健身", "玄关/运动架"),
+        BrandInfo("Nike", listOf("耐克", "nike", "air jordan"), "服饰箱包", "玄关/鞋柜"),
+        BrandInfo("Adidas", listOf("阿迪达斯", "adidas"), "服饰箱包", "玄关/鞋柜"),
+        BrandInfo("Uniqlo", listOf("优衣库", "uniqlo"), "服饰箱包", "主卧/衣柜"),
+        BrandInfo("Bandai", listOf("万代", "bandai", "高达", "gunpla"), "模型收藏", "书房/模型收藏柜"),
+        BrandInfo("GoodSmile", listOf("良笑社", "goodsmile", "gsc", "粘土人"), "模型收藏", "书房/亚克力防尘展柜"),
+        BrandInfo("POP MART", listOf("泡泡玛特", "popmart", "labubu", "molly", "dimoo"), "模型收藏", "客厅/潮玩阶梯架"),
+        BrandInfo("Mr.Hobby", listOf("郡士", "mr.hobby", "模型漆"), "模型收藏", "工作室/上色排漆架"),
+        BrandInfo("Moutai", listOf("茅台", "飞天茅台", "贵州茅台"), "食品饮料", "客厅/恒温酒柜"),
+        BrandInfo("Dyson", listOf("戴森", "dyson", "v12", "v15"), "日常居家", "客厅/挂架"),
+        BrandInfo("Roborock", listOf("石头扫地机", "石头科技", "roborock"), "日常居家", "客厅/充电座")
+    )
+
+    data class ExtractedSpecResult(
+        val cleanName: String,
+        val quantity: Int = 1,
+        val unit: String = "件",
+        val price: Double? = null,
+        val specTag: String? = null
+    )
+
+    fun extractSpecFromText(rawText: String): ExtractedSpecResult {
+        var text = rawText.trim()
+        var extractedPrice: Double? = null
+        var extractedQuantity = 1
+        var extractedUnit = "件"
+        var extractedSpec: String? = null
+
+        val priceMatch = Regex("""(?:¥|￥|RMB|rmb)?\s*(\d+(?:\.\d{1,2})?)\s*(?:元|块|RMB|rmb)""").find(text)
+            ?: Regex("""(?:¥|￥|RMB|rmb)\s*(\d+(?:\.\d{1,2})?)""").find(text)
+        if (priceMatch != null) {
+            val priceVal = priceMatch.groupValues[1].toDoubleOrNull()
+            if (priceVal != null && priceVal > 0) {
+                extractedPrice = priceVal
+                text = text.replace(priceMatch.value, "").trim()
+            }
+        }
+
+        val qtyUnitRegex = Regex("""(\d+)\s*(个|盒|包|瓶|支|台|把|卷|扎|提|袋|张|本|箱|双|罐|片|块|节|组|套|顶|条)""")
+        val qtyMatch = qtyUnitRegex.find(text)
+        if (qtyMatch != null) {
+            val qty = qtyMatch.groupValues[1].toIntOrNull() ?: 1
+            val u = qtyMatch.groupValues[2]
+            extractedQuantity = qty
+            extractedUnit = u
+            text = text.replace(qtyMatch.value, "").trim()
+        }
+
+        val specRegex = Regex("""(\d+(?:\.\d+)?\s*(?:k|m|u|n|p)?(?:Ω|ohm|uf|nf|pf|uh|mh|v|a|ma|w|mah|gb|tb|g|kg|ml|l|mm|cm|m|粒|片|pcs|pin|pin脚|寸|英寸|pin|bit|mhz|ghz))|([0-2][0-9]{3}|to-220|to-92|sop8|dip8|ssop|qfn|tssop|sot-23|t12|c245|c210|m[1-6]\*\d+|pla|petg|abs|tpu)""", RegexOption.IGNORE_CASE)
+        val specMatch = specRegex.find(text)
+        if (specMatch != null) {
+            extractedSpec = specMatch.value
+        }
+
+        val cleanName = text.ifBlank { rawText }
+        return ExtractedSpecResult(
+            cleanName = cleanName,
+            quantity = extractedQuantity,
+            unit = extractedUnit,
+            price = extractedPrice,
+            specTag = extractedSpec
+        )
+    }
+
+    fun calculateLevenshteinDistance(s1: String, s2: String): Int {
+        val dp = Array(s1.length + 1) { IntArray(s2.length + 1) }
+        for (i in 0..s1.length) dp[i][0] = i
+        for (j in 0..s2.length) dp[0][j] = j
+
+        for (i in 1..s1.length) {
+            for (j in 1..s2.length) {
+                val cost = if (s1[i - 1].lowercaseChar() == s2[j - 1].lowercaseChar()) 0 else 1
+                dp[i][j] = minOf(
+                    dp[i - 1][j] + 1,
+                    dp[i][j - 1] + 1,
+                    dp[i - 1][j - 1] + cost
+                )
+            }
+        }
+        return dp[s1.length][s2.length]
+    }
+
+    fun calculateCommercialSimilarity(query: String, target: String): Double {
+        val q = query.lowercase().trim()
+        val t = target.lowercase().trim()
+        if (q == t) return 1.0
+        if (q.isBlank() || t.isBlank()) return 0.0
+
+        val maxLen = maxOf(q.length, t.length)
+        val levDist = calculateLevenshteinDistance(q, t)
+        val levRatio = 1.0 - (levDist.toDouble() / maxLen)
+
+        val qTokens = q.split(Regex("""[\s\-_/*,，.。+]+""")).filter { it.isNotBlank() }.toSet()
+        val tTokens = t.split(Regex("""[\s\-_/*,，.。+]+""")).filter { it.isNotBlank() }.toSet()
+
+        val tokenJaccard = if (qTokens.isNotEmpty() && tTokens.isNotEmpty()) {
+            val intersection = qTokens.intersect(tTokens).size
+            val union = qTokens.union(tTokens).size
+            intersection.toDouble() / union
+        } else 0.0
+
+        val substringBonus = if (q.contains(t) || t.contains(q)) 0.3 else 0.0
+
+        return (0.45 * levRatio + 0.35 * tokenJaccard + substringBonus).coerceIn(0.0, 1.0)
+    }
+
+    fun parseCommercialBatchFreeText(
+        rawBatchText: String,
+        historyItems: List<StorageItem> = emptyList()
+    ): List<SingleItemRecognitionResult> {
+        val lines = rawBatchText.split(Regex("""[\n;\r\t]+"""))
+            .map { it.trim() }
+            .filter { it.isNotBlank() && it.length >= 2 }
+
+        val results = mutableListOf<SingleItemRecognitionResult>()
+        for (line in lines) {
+            val matchRes = matchCategoryAndInfoLocally(line, historyItems)
+            results.add(matchRes.result)
+        }
+        return results
+    }
 
     fun matchCategoryAndInfoLocally(
         queryText: String,
         historyItems: List<StorageItem> = emptyList(),
-        minScoreThreshold: Double = 0.55
+        minScoreThreshold: Double = 0.50
     ): LocalFeatureMatchResult {
         val cleanQuery = queryText.lowercase().trim()
         if (cleanQuery.isBlank()) {
@@ -808,19 +923,22 @@ object LocalHeuristicEngine {
             )
         }
 
-        // 1. 历史记录 100% 精确匹配
-        val exactHistory = historyItems.firstOrNull { it.name.trim().lowercase() == cleanQuery }
+        // 0. 解析文本中的数量、规格与价格 (Commercial Spec Parser)
+        val parsedSpec = extractSpecFromText(queryText)
+
+        // 1. 历史数据库 100% 精确匹配
+        val exactHistory = historyItems.firstOrNull { it.name.trim().lowercase() == cleanQuery || it.name.trim().lowercase() == parsedSpec.cleanName.lowercase() }
         if (exactHistory != null) {
             val result = SingleItemRecognitionResult(
                 name = exactHistory.name,
                 category = exactHistory.category,
                 suggestedLocation = exactHistory.locationPath.ifBlank { "客厅/收纳柜" },
-                quantity = exactHistory.quantity,
+                quantity = if (parsedSpec.quantity > 1) parsedSpec.quantity else exactHistory.quantity,
                 unit = exactHistory.unit,
-                estimatedPrice = exactHistory.price,
+                estimatedPrice = parsedSpec.price ?: exactHistory.price,
                 expiryDays = exactHistory.expiryDate?.let { ((it - System.currentTimeMillis()) / (24 * 3600 * 1000)).toInt().coerceAtLeast(0) },
-                tags = exactHistory.tags.split(",").filter { it.isNotBlank() } + listOf("历史记录精确命中", "免网络请求"),
-                storageTips = exactHistory.notes?.ifBlank { null } ?: "已匹配市场上/历史上相同物品「${exactHistory.name}」"
+                tags = exactHistory.tags.split(",").filter { it.isNotBlank() } + listOf("历史库100%精确", "免网秒级"),
+                storageTips = exactHistory.notes?.ifBlank { null } ?: "已匹配用户自建/历史上相同物品「${exactHistory.name}」"
             )
             return LocalFeatureMatchResult(
                 isMatched = true,
@@ -830,31 +948,63 @@ object LocalHeuristicEngine {
             )
         }
 
-        // 2. 历史记录模糊/子串匹配
-        val fuzzyHistory = historyItems.firstOrNull { item ->
-            val hName = item.name.trim().lowercase()
-            hName.length >= 2 && (cleanQuery.contains(hName) || hName.contains(cleanQuery))
+        // 2. 历史数据库商业级模糊匹配 (Token & Levenshtein Similarity)
+        var maxHistorySim = 0.0
+        var bestFuzzyHistory: StorageItem? = null
+        for (item in historyItems) {
+            val sim = calculateCommercialSimilarity(parsedSpec.cleanName, item.name)
+            if (sim > maxHistorySim) {
+                maxHistorySim = sim
+                bestFuzzyHistory = item
+            }
         }
-        if (fuzzyHistory != null) {
+
+        if (maxHistorySim >= 0.65 && bestFuzzyHistory != null) {
             val result = SingleItemRecognitionResult(
-                name = queryText,
-                category = fuzzyHistory.category,
-                suggestedLocation = fuzzyHistory.locationPath.ifBlank { "客厅/收纳柜" },
-                quantity = 1,
-                unit = fuzzyHistory.unit,
-                estimatedPrice = fuzzyHistory.price,
-                tags = fuzzyHistory.tags.split(",").filter { it.isNotBlank() } + listOf("历史语义相近", "免网络请求"),
-                storageTips = "参照历史相似物品「${fuzzyHistory.name}」推荐放置于 ${fuzzyHistory.locationPath}"
+                name = parsedSpec.cleanName,
+                category = bestFuzzyHistory.category,
+                suggestedLocation = bestFuzzyHistory.locationPath.ifBlank { "客厅/收纳柜" },
+                quantity = parsedSpec.quantity,
+                unit = parsedSpec.unit.takeIf { it != "件" } ?: bestFuzzyHistory.unit,
+                estimatedPrice = parsedSpec.price ?: bestFuzzyHistory.price,
+                tags = (bestFuzzyHistory.tags.split(",").filter { it.isNotBlank() } + listOf("用户自适应偏好", "高置信匹配", parsedSpec.specTag)).filterNotNull(),
+                storageTips = "根据您的历史归类习惯「${bestFuzzyHistory.name}」智能推荐放置于 ${bestFuzzyHistory.locationPath}"
             )
             return LocalFeatureMatchResult(
                 isMatched = true,
-                confidenceScore = 0.88,
-                matchSourceLabel = "历史数据库模糊匹配 (${fuzzyHistory.name})",
+                confidenceScore = maxHistorySim,
+                matchSourceLabel = "用户历史自学习归类 (${(maxHistorySim * 100).toInt()}%)",
                 result = result
             )
         }
 
-        // 3. 内置权重矩阵计算 (Feature Weight Matrix Score)
+        // 3. 商业级品牌词典匹配 (Brand Alias Map)
+        val matchedBrand = BRAND_ALIAS_MAP.firstOrNull { brand ->
+            brand.aliases.any { alias -> cleanQuery.contains(alias.lowercase()) } || cleanQuery.contains(brand.canonicalBrand.lowercase())
+        }
+        if (matchedBrand != null) {
+            val fallback = suggestForNameOnly(parsedSpec.cleanName)
+            val tags = (fallback.tags + listOf(matchedBrand.canonicalBrand, "商业品牌匹配")).distinct()
+            val result = SingleItemRecognitionResult(
+                name = parsedSpec.cleanName,
+                category = matchedBrand.category,
+                suggestedLocation = matchedBrand.defaultLocation,
+                quantity = parsedSpec.quantity,
+                unit = parsedSpec.unit.takeIf { it != "件" } ?: fallback.unit,
+                estimatedPrice = parsedSpec.price ?: fallback.estimatedPrice,
+                expiryDays = fallback.expiryDays,
+                tags = tags,
+                storageTips = "自动匹配知名品牌 [${matchedBrand.canonicalBrand}] 知识库，归类为 [${matchedBrand.category}]，建议存放于 ${matchedBrand.defaultLocation}"
+            )
+            return LocalFeatureMatchResult(
+                isMatched = true,
+                confidenceScore = 0.95,
+                matchSourceLabel = "商业品牌知识库命中 (${matchedBrand.canonicalBrand})",
+                result = result
+            )
+        }
+
+        // 4. 内置加权词频与语义相似度计算 (Feature Weight Matrix Score)
         var maxCategoryScore = 0.0
         var bestCategory = "日常居家"
         var bestMatchedTerm: CategoryTermWeight? = null
@@ -862,21 +1012,13 @@ object LocalHeuristicEngine {
         for ((category, termList) in CATEGORY_WEIGHT_MATRIX) {
             var currentCategoryScore = 0.0
             for (termWeight in termList) {
-                val kw = termWeight.term.lowercase()
-                if (cleanQuery == kw) {
-                    val score = termWeight.weight * 2.0
-                    if (score > currentCategoryScore) {
-                        currentCategoryScore = score
-                    }
-                    if (bestMatchedTerm == null || termWeight.weight > (bestMatchedTerm?.weight ?: 0.0)) {
-                        bestMatchedTerm = termWeight
-                    }
-                } else if (cleanQuery.contains(kw) || kw.contains(cleanQuery)) {
-                    val score = termWeight.weight * 1.0
-                    if (score > currentCategoryScore) {
-                        currentCategoryScore = score
-                    }
-                    if (bestMatchedTerm == null || termWeight.weight > (bestMatchedTerm?.weight ?: 0.0)) {
+                val sim = calculateCommercialSimilarity(parsedSpec.cleanName, termWeight.term)
+                val weightedSim = sim * termWeight.weight
+                if (weightedSim > currentCategoryScore) {
+                    currentCategoryScore = weightedSim
+                }
+                if (bestMatchedTerm == null || weightedSim > ((bestMatchedTerm?.weight ?: 0.0) * maxCategoryScore)) {
+                    if (sim >= 0.45) {
                         bestMatchedTerm = termWeight
                     }
                 }
@@ -893,31 +1035,43 @@ object LocalHeuristicEngine {
         if (normalizedScore >= minScoreThreshold && bestMatchedTerm != null) {
             val term = bestMatchedTerm!!
             val result = SingleItemRecognitionResult(
-                name = queryText,
+                name = parsedSpec.cleanName,
                 category = bestCategory,
                 suggestedLocation = term.defaultLocation,
-                quantity = 1,
-                unit = term.defaultUnit,
-                estimatedPrice = term.defaultPrice,
+                quantity = parsedSpec.quantity,
+                unit = parsedSpec.unit.takeIf { it != "件" } ?: term.defaultUnit,
+                estimatedPrice = parsedSpec.price ?: term.defaultPrice,
                 expiryDays = term.defaultExpiryDays,
-                tags = term.defaultTags + listOf("本地权重分类", "毫秒无网"),
-                storageTips = "本地基础权重识别归类为 [${bestCategory}]，建议存放于 ${term.defaultLocation}"
+                tags = (term.defaultTags + listOf("离线权重计算", "毫秒级响应", parsedSpec.specTag)).filterNotNull(),
+                storageTips = "商用级离线模型计算归类为 [${bestCategory}]，推荐存放于 ${term.defaultLocation}"
             )
             return LocalFeatureMatchResult(
                 isMatched = true,
                 confidenceScore = normalizedScore,
-                matchSourceLabel = "内置权重矩阵匹配 (${(normalizedScore * 100).toInt()}%)",
+                matchSourceLabel = "商用级特征词阵匹配 (${(normalizedScore * 100).toInt()}%)",
                 result = result
             )
         }
 
-        // 4. 置信度未达标
-        val fallbackResult = suggestForNameOnly(queryText)
+        // 5. 保底算法匹配 (Fallback Engine)
+        val fallbackResult = suggestForNameOnly(parsedSpec.cleanName)
+        val finalFallback = SingleItemRecognitionResult(
+            name = parsedSpec.cleanName,
+            category = fallbackResult.category,
+            suggestedLocation = fallbackResult.suggestedLocation,
+            quantity = parsedSpec.quantity,
+            unit = parsedSpec.unit.takeIf { it != "件" } ?: fallbackResult.unit,
+            estimatedPrice = parsedSpec.price ?: fallbackResult.estimatedPrice,
+            expiryDays = fallbackResult.expiryDays,
+            tags = fallbackResult.tags,
+            storageTips = fallbackResult.storageTips
+        )
+
         return LocalFeatureMatchResult(
             isMatched = false,
             confidenceScore = normalizedScore,
-            matchSourceLabel = "特征置信度未达标",
-            result = fallbackResult
+            matchSourceLabel = "保底算法匹配",
+            result = finalFallback
         )
     }
 

@@ -1,0 +1,44 @@
+<!-- pages/containers/containers.wxml - 空间层级与容器管理 -->
+<view class="container">
+  <!-- 统计信息 -->
+  <view class="card flex-between">
+    <view>
+      <text class="text-bold" style="font-size: 32rpx;">🏡 空间收纳拓扑</text>
+      <view class="text-muted" style="margin-top: 6rpx;">管理家庭空间、抽屉柜与元器件零件盒</view>
+    </view>
+    <button class="btn-primary" style="padding: 10rpx 28rpx; font-size: 26rpx;" bindtap="onAddRootContainer">+ 新建空间</button>
+  </view>
+
+  <!-- 空间树形卡片列表 -->
+  <view wx:for="{{containersTree}}" wx:key="id" class="card root-container-card">
+    <view class="flex-between root-header">
+      <view class="flex-row">
+        <text class="root-icon">{{item.type === 'ROOM' ? '🚪' : '📦'}}</text>
+        <text class="root-name text-bold">{{item.name}}</text>
+        <text class="count-tag">{{item.itemCount}} 件物品</text>
+      </view>
+      <view class="flex-row">
+        <text class="action-text" bindtap="onAddChild" data-parent-id="{{item.id}}" data-parent-name="{{item.name}}">+ 子容器</text>
+        <text class="action-del" bindtap="onDeleteContainer" data-id="{{item.id}}">删除</text>
+      </view>
+    </view>
+
+    <!-- 子容器列表 -->
+    <view wx:if="{{item.children.length > 0}}" class="sub-container-list">
+      <view 
+        wx:for="{{item.children}}" 
+        wx:for-item="sub" 
+        wx:key="id" 
+        class="sub-container-row flex-between"
+      >
+        <view class="flex-row">
+          <text class="sub-line">└─</text>
+          <text class="sub-icon">📦</text>
+          <text class="sub-name">{{sub.name}}</text>
+          <text class="sub-count">({{sub.itemCount}}件)</text>
+        </view>
+        <text class="action-del-sub" bindtap="onDeleteContainer" data-id="{{sub.id}}">✕</text>
+      </view>
+    </view>
+  </view>
+</view>

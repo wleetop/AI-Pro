@@ -1,0 +1,58 @@
+<!-- pages/settings/settings.wxml - 设置与数据管理 -->
+<view class="container">
+  <!-- AI 识别模型配置 -->
+  <view class="card">
+    <view class="flex-between section-title-row">
+      <text class="text-bold" style="font-size: 30rpx;">🤖 AI 多模态识别引擎设置</text>
+      <text class="status-pill">{{config.provider === 'OFFLINE_HEURISTIC' ? '离线启发式' : '云端API'}}</text>
+    </view>
+
+    <view class="setting-item flex-between">
+      <text class="setting-label">识别服务提供商</text>
+      <picker range="{{providerOptions}}" range-key="name" value="{{providerIndex}}" bindchange="onProviderChange">
+        <view class="picker-val">{{providerOptions[providerIndex].name}} ▾</view>
+      </picker>
+    </view>
+
+    <view class="setting-item flex-between" wx:if="{{config.provider !== 'OFFLINE_HEURISTIC'}}">
+      <text class="setting-label">API Key / 密钥</text>
+      <input 
+        class="api-key-input" 
+        password="{{hideKey}}" 
+        placeholder="输入大模型 API Key" 
+        value="{{config.apiKey}}" 
+        bindinput="onApiKeyInput"
+      />
+      <text class="key-toggle" bindtap="toggleKeyVisibility">{{hideKey ? '👁️' : '🙈'}}</text>
+    </view>
+  </view>
+
+  <!-- 数据备份与迁移 -->
+  <view class="card">
+    <text class="text-bold" style="font-size: 30rpx; margin-bottom: 20rpx; display: block;">📦 数据备份、导出与迁移</text>
+    
+    <view class="btn-group-row flex-between">
+      <button class="btn-secondary" style="flex: 1; margin-right: 12rpx;" bindtap="onExportData">📋 复制全量备份 JSON</button>
+      <button class="btn-secondary" style="flex: 1; margin-left: 12rpx;" bindtap="onImportData">📥 从剪贴板导入数据</button>
+    </view>
+  </view>
+
+  <!-- 小程序部署与开发指南 -->
+  <view class="card deploy-guide-card">
+    <text class="text-bold" style="font-size: 30rpx; color: #07C160; margin-bottom: 12rpx; display: block;">🚀 微信小程序极速上线指南</text>
+    <view class="guide-text">
+      1. 下载本项目源码并在微信开发者工具中选择 <text class="code-tag">miniprogram</text> 目录导入。<br/>
+      2. 填入您的 AppID 即可直接在手机端微信真机预览与调试。<br/>
+      3. 本小程序完全采用本地 Storage 存储与纯前端大模型请求，支持离线规则与云端双引擎。
+    </view>
+  </view>
+
+  <!-- 关于信息 -->
+  <view class="card about-card flex-between">
+    <view>
+      <text class="text-bold">AI 智存空间 (微信小程序版)</text>
+      <view class="text-muted" style="margin-top: 6rpx;">全域物品与电子元器件智能收纳系统</view>
+    </view>
+    <text class="ver-tag">v2.0.0</text>
+  </view>
+</view>

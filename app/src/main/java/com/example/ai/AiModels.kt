@@ -1,8 +1,10 @@
 package com.example.ai
 
 data class ApiConfig(
-    val provider: ProviderType = ProviderType.GEMINI,
+    val provider: ProviderType = ProviderType.HUNYUAN_3,
     val apiKey: String = "",
+    val hunyuanBaseUrl: String = "https://api.hunyuan.cloud.tencent.com/v1",
+    val hunyuanModel: String = "hunyuan-vision",
     val customBaseUrl: String = "https://api.openai.com/v1",
     val customModel: String = "gpt-4o",
     val geminiModel: String = "gemini-3.5-flash",
@@ -13,15 +15,22 @@ data class ApiConfig(
     val imageMaxDimension: Int = 1024,    // 默认提升至 1024px，确保多物品细节清晰，可选 640/1024/1280
     val imageQuality: Int = 85,           // JPEG压缩质量：提升至 85% 避免边缘锯齿导致误识别
     val openAiLowDetail: Boolean = false, // 批量全家福识别默认采用高细节模式(high detail)，确保小物体可辨
-    val fastThinkingMode: Boolean = true  // Gemini 极速思考模式 (跳过漫长思考直接输出)
+    val fastThinkingMode: Boolean = true  // 极速思考模式 (跳过漫长思考直接输出)
 ) {
     fun getEffectiveModel(): String {
-        return if (useLocalOfflineEngine) "本地离线智能引擎" else if (provider == ProviderType.GEMINI) geminiModel else customModel
+        return when {
+            useLocalOfflineEngine -> "本地离线智能引擎"
+            provider == ProviderType.HUNYUAN_3 -> "腾讯混元3 ($hunyuanModel)"
+            provider == ProviderType.GEMINI -> "Google Gemini 备选 ($geminiModel)"
+            else -> "OpenAI 兼容 ($customModel)"
+        }
     }
 
     fun getNormalizedBaseUrl(): String {
-        val trimmed = customBaseUrl.trim()
-        if (trimmed.isBlank()) return "https://api.openai.com/v1"
+        val trimmed = if (provider == ProviderType.HUNYUAN_3) hunyuanBaseUrl.trim() else customBaseUrl.trim()
+        if (trimmed.isBlank()) {
+            return if (provider == ProviderType.HUNYUAN_3) "https://api.hunyuan.cloud.tencent.com/v1" else "https://api.openai.com/v1"
+        }
         return if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
             trimmed.trimEnd('/')
         } else {
@@ -38,17 +47,22 @@ data class ApiConfig(
         }
 
         // 检查 OpenAI 兼容模式下的 Base URL 是否配置为网页分享链接（如 share.gemini.google）
-        if (provider == ProviderType.OPENAI_COMPATIBLE) {
-            val urlLower = customBaseUrl.lowercase().trim()
+        if (provider == ProviderType.OPENAI_COMPATIBLE || provider == ProviderType.HUNYUAN_3) {
+            val urlLower = (if (provider == ProviderType.HUNYUAN_3) hunyuanBaseUrl else customBaseUrl).lowercase().trim()
             if (urlLower.contains("share.gemini.google") || urlLower.contains("gemini.google.com")) {
                 return ModelValidationResult(
                     isValid = false,
-                    warning = "配置错误拦截：您填写的「$customBaseUrl」是 Google Gemini 网页分享链接，不是标准 API 接口地址！若需使用 Gemini，请将上方接口类型选为「Google Gemini 官方」；若使用通义千问/智谱等，请填写相应 API Base URL。"
+                    warning = "配置错误拦截：您填写的「$urlLower」是 Google Gemini 网页分享链接，不是标准 API 接口地址！若需使用 Gemini，请将上方接口类型选为「Google Gemini 官方 (备选)」；若使用混元/千问/智谱等，请填写相应 API Base URL。"
                 )
             }
         }
 
-        val model = getEffectiveModel().lowercase().trim()
+        val model = (when (provider) {
+            ProviderType.HUNYUAN_3 -> hunyuanModel
+            ProviderType.GEMINI -> geminiModel
+            ProviderType.OPENAI_COMPATIBLE -> customModel
+        }).lowercase().trim()
+
         val prohibitedPatterns = listOf(
             "dall-e", "midjourney", "stable-diffusion", "flux",
             "sora", "runway", "pika", "kling",
@@ -59,7 +73,7 @@ data class ApiConfig(
             if (model.contains(pattern)) {
                 return ModelValidationResult(
                     isValid = false,
-                    warning = "拦截错误模型「$model」：该模型为画图/语音/视频/嵌入模型，无法进行视觉识别与收纳分析，请更换为视觉模型（如 gemini-3.5-flash, gpt-4o, qwen-vl-max, glm-4v）"
+                    warning = "拦截错误模型「$model」：该模型为画图/语音/视频/嵌入模型，无法进行视觉识别与收纳分析，请更换为视觉模型（如 hunyuan-vision, hunyuan-3, gemini-3.5-flash, gpt-4o, qwen-vl-plus）"
                 )
             }
         }
@@ -68,8 +82,9 @@ data class ApiConfig(
 }
 
 enum class ProviderType {
-    GEMINI,
-    OPENAI_COMPATIBLE
+    HUNYUAN_3,          // 腾讯混元 3 (首选主推)
+    OPENAI_COMPATIBLE,  // OpenAI 兼容接口 (通义千问/智谱/SiliconFlow等)
+    GEMINI              // Google Gemini 官方 (备选项)
 }
 
 data class ModelValidationResult(

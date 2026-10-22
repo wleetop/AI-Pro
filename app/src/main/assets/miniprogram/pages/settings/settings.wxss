@@ -1,0 +1,75 @@
+/* pages/settings/settings.wxss */
+.section-title-row {
+  margin-bottom: 20rpx;
+}
+
+.status-pill {
+  font-size: 20rpx;
+  background: #E8F7EE;
+  color: #07C160;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+}
+
+.setting-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #F0F2F5;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-size: 28rpx;
+  color: #4A5568;
+}
+
+.picker-val {
+  font-size: 28rpx;
+  color: #07C160;
+  font-weight: 600;
+}
+
+.api-key-input {
+  flex: 1;
+  text-align: right;
+  font-size: 26rpx;
+  color: #1A202C;
+  margin: 0 16rpx;
+}
+
+.key-toggle {
+  font-size: 32rpx;
+  padding: 0 8rpx;
+}
+
+.btn-group-row {
+  margin-top: 16rpx;
+}
+
+.deploy-guide-card {
+  background: #F6FFED;
+  border: 1rpx solid #B7EB8F;
+}
+
+.guide-text {
+  font-size: 24rpx;
+  color: #389E0D;
+  line-height: 1.8;
+}
+
+.code-tag {
+  background: #E8F7EE;
+  padding: 2rpx 8rpx;
+  border-radius: 6rpx;
+  font-weight: bold;
+}
+
+.ver-tag {
+  font-size: 24rpx;
+  background: #F0F2F5;
+  color: #8C8C8C;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+}

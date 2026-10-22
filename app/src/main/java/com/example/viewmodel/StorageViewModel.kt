@@ -31,6 +31,9 @@ import com.example.util.SecurityLockManager
 import com.example.util.SecuritySettings
 import com.example.util.WebDavConfig
 import com.example.util.WebDavManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +41,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import com.example.ai.LocalHeuristicEngine
+import com.example.ui.theme.AppThemePreset
 
 enum class ItemSortOrder(val label: String) {
     UPDATED_DESC("最近更新"),
@@ -222,29 +229,49 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
     private val _apiConfig = MutableStateFlow(aiService.loadConfig())
     val apiConfig = _apiConfig.asStateFlow()
 
+    // App Theme Preset state
+    private val themePrefs = application.getSharedPreferences("storage_pro_theme_prefs", Context.MODE_PRIVATE)
+    private val _currentThemePreset = MutableStateFlow(
+        run {
+            val savedThemeId = themePrefs.getString("theme_preset", AppThemePreset.ROYAL_PURPLE.id)
+            AppThemePreset.values().firstOrNull { it.id == savedThemeId } ?: AppThemePreset.ROYAL_PURPLE
+        }
+    )
+    val currentThemePreset = _currentThemePreset.asStateFlow()
+
+    fun setThemePreset(preset: AppThemePreset) {
+        _currentThemePreset.value = preset
+        themePrefs.edit().putString("theme_preset", preset.id).apply()
+    }
+
     init {
         monitorNetwork()
     }
 
     private fun monitorNetwork() {
-        val cm = getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val initialNetwork = cm.activeNetwork
-        val caps = cm.getNetworkCapabilities(initialNetwork)
-        _isOnline.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        try {
+            val cm = getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+            val initialNetwork = cm.activeNetwork
+            val caps = cm.getNetworkCapabilities(initialNetwork)
+            _isOnline.value = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
 
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
+            val request = NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
 
-        cm.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                _isOnline.value = true
-            }
+            cm.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    _isOnline.value = true
+                }
 
-            override fun onLost(network: Network) {
-                _isOnline.value = false
-            }
-        })
+                override fun onLost(network: Network) {
+                    _isOnline.value = false
+                }
+            })
+        } catch (e: Exception) {
+            // Gracefully fallback to online if network manager callback fails on emulator
+            _isOnline.value = true
+        }
     }
 
     // Filter controls
@@ -405,21 +432,32 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
         lastSingleBitmap = bitmap
         viewModelScope.launch {
             try {
-                _aiState.value = AiOperationState.Loading("正在进行图像预处理与本地特征检索...")
+                // Step 1: Pre-process with Canvas compression and save thumbnail safely
                 val localPath = try {
                     ImageCompressor.compressBitmapAndSave(getApplication(), bitmap)
                 } catch (e: Throwable) {
                     null
                 }
 
-                // Step 1: Pre-process with Canvas compression
+                // Check if API key is blank and user is not in offline engine mode
+                val currentConfig = _apiConfig.value
+                if (currentConfig.apiKey.isBlank() && !currentConfig.useLocalOfflineEngine) {
+                    showMessage("未设置云服务，请设置，当前已自动转为本地识图")
+                    val local = LocalHeuristicEngine.recognizeSingleItem(bitmap)
+                    val finalResult = local.copy(
+                        storageTips = "${local.storageTips} (未设置云端密钥，已自动转为本地识图)"
+                    )
+                    _aiState.value = AiOperationState.SingleSuccess(finalResult, localPath)
+                    return@launch
+                }
+
                 val compressedBytes = try {
                     ImageCompressor.preprocessBitmapForAi(bitmap, maxDimension = 640, quality = 75)
                 } catch (e: Throwable) {
                     null
                 }
 
-                // Step 2: Check high-frequency cache
+                // Step 2: Check high-frequency cache for instant 0ms result
                 val hashKey = if (compressedBytes != null) "IMG_${bitmap.width}x${bitmap.height}_${compressedBytes.size.hashCode()}" else null
                 val cached = if (hashKey != null) {
                     try { repository.getAiCache(hashKey) } catch (e: Throwable) { null }
@@ -433,15 +471,37 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
                         quantity = cached.quantity,
                         unit = cached.unit,
                         tags = cached.tags.split(",").filter { it.isNotBlank() },
-                        storageTips = cached.storageTips.ifBlank { "本地特征高速匹配成功 (已加速解析)" }
+                        storageTips = cached.storageTips.ifBlank { "本地特征高速匹配成功 (秒级解析)" }
                     )
                     _aiState.value = AiOperationState.SingleSuccess(cachedResult, localPath)
                     return@launch
                 }
 
-                _aiState.value = AiOperationState.Loading("AI 正在深度解析物品外观与收纳属性...")
-                val result = aiService.recognizeSingleItem(bitmap)
-                result.onSuccess { res ->
+                // Step 3: Progressive status hints during AI recognition
+                val progressJob = launch {
+                    _aiState.value = AiOperationState.Loading("✨ AI 正在极速连接视觉引擎...")
+                    delay(1500)
+                    _aiState.value = AiOperationState.Loading("🔍 正在智能分析物品特征与空间推荐...")
+                    delay(2000)
+                    _aiState.value = AiOperationState.Loading("⚡ 深度提取规格参数 (若超5秒将自动转本地解析)...")
+                }
+
+                // Step 4: Strict 5-second timeout for cloud AI recognition
+                val aiTask = async(Dispatchers.IO) {
+                    aiService.recognizeSingleItem(bitmap)
+                }
+
+                val result = withTimeoutOrNull(5000L) {
+                    try {
+                        aiTask.await()
+                    } catch (e: Throwable) {
+                        Result.failure(e)
+                    }
+                }
+                progressJob.cancel()
+
+                if (result != null && result.isSuccess) {
+                    val res = result.getOrThrow()
                     _aiState.value = AiOperationState.SingleSuccess(res, localPath)
                     // Cache the recognized item for future instant retrieval
                     try {
@@ -459,26 +519,27 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
                                 )
                             )
                         }
-                        if (res.name.isNotBlank()) {
-                            repository.saveAiCache(
-                                AiRecognitionCache(
-                                    featureKey = res.name.trim().lowercase(),
-                                    name = res.name,
-                                    category = res.category,
-                                    suggestedLocation = res.suggestedLocation,
-                                    quantity = res.quantity,
-                                    unit = res.unit,
-                                    tags = res.tags.joinToString(","),
-                                    storageTips = res.storageTips
-                                )
-                            )
-                        }
                     } catch (ignored: Throwable) {}
-                }.onFailure {
-                    _aiState.value = AiOperationState.Error(it.message ?: "识别失败")
+                } else {
+                    // Timeout > 5s or Network Error -> Seamlessly fallback to local heuristic engine
+                    val isTimeout = (result == null)
+                    val local = LocalHeuristicEngine.recognizeSingleItem(bitmap)
+                    val degradationTip = if (isTimeout) {
+                        "⚠️ 云端AI识别响应超过5秒，已自动无缝切换至本地离线引擎，流程不中断"
+                    } else {
+                        val errMsg = result?.exceptionOrNull()?.message ?: "云端连接异常"
+                        "⚠️ 云端接口异常 ($errMsg)，已自动切换至本地引擎秒级解析"
+                    }
+                    showMessage(degradationTip)
+                    val finalResult = local.copy(
+                        storageTips = "${local.storageTips} ($degradationTip)"
+                    )
+                    _aiState.value = AiOperationState.SingleSuccess(finalResult, localPath)
                 }
             } catch (e: Throwable) {
-                _aiState.value = AiOperationState.Error(e.localizedMessage ?: "识别过程出现异常，请重试")
+                // Ultimate fallback for absolute safety
+                val local = LocalHeuristicEngine.recognizeSingleItem(bitmap)
+                _aiState.value = AiOperationState.SingleSuccess(local, null)
             }
         }
     }
@@ -499,6 +560,11 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
         if (name.isBlank()) return
         viewModelScope.launch {
             try {
+                val currentConfig = _apiConfig.value
+                if (currentConfig.apiKey.isBlank() && !currentConfig.useLocalOfflineEngine) {
+                    showMessage("未设置云服务，请设置，当前已自动转为本地识图")
+                }
+
                 val trimmed = name.trim().lowercase()
                 // Check Room cache first
                 val cached = try { repository.getAiCache(trimmed) } catch (e: Throwable) { null }
@@ -516,7 +582,7 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
                     return@launch
                 }
 
-                _aiState.value = AiOperationState.Loading("正在进行本地特征表与历史分类匹配...")
+                _aiState.value = AiOperationState.Loading("正在进行本地特征表与分类匹配...")
                 val result = aiService.suggestForNameOnly(name, allItems.value)
                 result.onSuccess { res ->
                     _aiState.value = AiOperationState.SingleSuccess(res)
@@ -547,6 +613,11 @@ class StorageViewModel(application: Application) : AndroidViewModel(application)
         lastBatchBitmap = bitmap
         viewModelScope.launch {
             try {
+                val currentConfig = _apiConfig.value
+                if (currentConfig.apiKey.isBlank() && !currentConfig.useLocalOfflineEngine) {
+                    showMessage("未设置云服务，请设置，当前已自动转为本地识图")
+                }
+
                 _aiState.value = AiOperationState.BatchStreaming(
                     items = emptyList(),
                     isComplete = false,

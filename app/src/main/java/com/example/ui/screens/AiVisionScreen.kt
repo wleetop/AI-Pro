@@ -229,7 +229,7 @@ fun AiVisionScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "支持 Gemini 官方与主流 OpenAI 兼容视觉大模型",
+                        text = "首选腾讯混元 3 大模型，支持 Gemini 备选与主流 OpenAI 兼容引擎",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -264,7 +264,7 @@ fun AiVisionScreen(
                         )
                         Text(
                             text = if (apiConfig.useLocalOfflineEngine) "免配置 API Key · 纯本地推断 · 100% 隐私安全 · 断网可用"
-                            else if (apiConfig.apiKey.isNotBlank()) "已连接: ${if (apiConfig.provider == ProviderType.GEMINI) "Gemini (${apiConfig.geminiModel})" else "OpenAI (${apiConfig.customModel})"}"
+                            else if (apiConfig.apiKey.isNotBlank()) "已连接: ${apiConfig.getEffectiveModel()}"
                             else "⚠️ 未配置 API Key，点击右侧可一键开启本地智能引擎",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

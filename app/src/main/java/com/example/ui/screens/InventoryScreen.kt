@@ -1,5 +1,9 @@
 package com.example.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,6 +31,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Checklist
@@ -35,6 +42,7 @@ import androidx.compose.material.icons.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Sort
@@ -58,15 +66,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -91,8 +102,12 @@ import com.example.ui.theme.MetricPurpleText
 import com.example.ui.theme.MetricRedBg
 import com.example.ui.theme.MetricRedLabel
 import com.example.ui.theme.MetricRedText
+import com.example.util.ImageCompressor
+import com.example.viewmodel.AiOperationState
 import com.example.viewmodel.ItemSortOrder
 import com.example.viewmodel.StorageViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
@@ -112,11 +127,56 @@ fun InventoryScreen(
     val semanticMatchedIds by viewModel.semanticMatchedIds.collectAsState()
     val isOnline by viewModel.isOnline.collectAsState()
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val aiState by viewModel.aiState.collectAsState()
+
     var showAddItemDialog by remember { mutableStateOf(false) }
+    var aiPrefilledItem by remember { mutableStateOf<StorageItem?>(null) }
+    var aiPrefilledImagePath by remember { mutableStateOf<String?>(null) }
     var itemToEdit by remember { mutableStateOf<StorageItem?>(null) }
     var itemToDelete by remember { mutableStateOf<StorageItem?>(null) }
     var previewImagePath by remember { mutableStateOf<String?>(null) }
     var showSortMenu by remember { mutableStateOf(false) }
+
+    // Hero AI Photo Picker (One-Tap Entry Point)
+    val heroPhotoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch(Dispatchers.IO) {
+                val bmp = ImageCompressor.decodeUriToBitmap(context, uri)
+                if (bmp != null) {
+                    viewModel.recognizeSinglePhoto(bmp)
+                } else {
+                    viewModel.showMessage("图片读取失败，请重新选择")
+                }
+            }
+        }
+    }
+
+    // Auto-open Add Item dialog when AI recognition or local fallback finishes
+    LaunchedEffect(aiState) {
+        val state = aiState
+        if (state is AiOperationState.SingleSuccess) {
+            val res = state.result
+            aiPrefilledItem = StorageItem(
+                name = res.name,
+                category = res.category,
+                locationPath = res.suggestedLocation,
+                quantity = res.quantity,
+                unit = res.unit,
+                price = res.estimatedPrice,
+                tags = res.tags.joinToString(","),
+                notes = res.storageTips,
+                imageUri = state.compressedImagePath,
+                expiryDate = res.expiryDays?.let { System.currentTimeMillis() + it.toLong() * 86400000L }
+            )
+            aiPrefilledImagePath = state.compressedImagePath
+            showAddItemDialog = true
+            viewModel.resetAiState()
+        }
+    }
 
     // Batch Management state
     var isSelectionMode by remember { mutableStateOf(false) }
@@ -141,201 +201,286 @@ fun InventoryScreen(
             // Network & Offline Status Banner
             NetworkStatusBar(isOnline = isOnline)
 
-            // High Density Top Header
+            // Streamlined Clean Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "万物收纳",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
                         Text(
-                            text = "万物收纳",
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "AI 增强",
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(if (isOnline) AlertGreen else AlertAmber)
+                    )
+                }
+
+                // Batch Mode Toggle
+                OutlinedButton(
+                    onClick = {
+                        isSelectionMode = !isSelectionMode
+                        if (!isSelectionMode) {
+                            selectedItemIds = emptySet()
+                        }
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = if (isSelectionMode) {
+                        ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        ButtonDefaults.outlinedButtonColors()
+                    },
+                    modifier = Modifier.testTag("batch_mode_toggle_button")
+                ) {
+                    Icon(
+                        imageVector = if (isSelectionMode) Icons.Default.Close else Icons.Default.Checklist,
+                        contentDescription = "批量管理",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isSelectionMode) "退出批量" else "批量管理", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+
+            // 🌟 醒目的 AI 拍照识图 Hero 入口区域 (一键拍照识别入库 + 5秒容错降级)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("home_ai_vision_hero_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "AI 拍照秒级识图",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "自动识别品名分类与收纳位置 (5秒智能降级)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
                         Surface(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(6.dp)
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                         ) {
                             Text(
-                                text = "PRO",
+                                text = "双引擎",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 2.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
+                        Button(
+                            onClick = {
+                                heroPhotoPicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
                             modifier = Modifier
-                                .size(7.dp)
-                                .clip(CircleShape)
-                                .background(if (isOnline) AlertGreen else AlertAmber)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Text(
-                            text = if (isOnline) "LOCAL-FIRST ENGINE ACTIVE" else "OFFLINE LOCAL-FIRST ACTIVE",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                                .weight(1.3f)
+                                .height(42.dp)
+                                .testTag("home_ai_camera_hero_button"),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("📸 拍照识图入库", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                        }
 
-                // Header right actions: Batch Mode Toggle & Profile
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = {
-                            isSelectionMode = !isSelectionMode
-                            if (!isSelectionMode) {
-                                selectedItemIds = emptySet()
-                            }
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = if (isSelectionMode) {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            ButtonDefaults.outlinedButtonColors()
-                        },
-                        modifier = Modifier.testTag("batch_mode_toggle_button")
-                    ) {
-                        Icon(
-                            imageVector = if (isSelectionMode) Icons.Default.Close else Icons.Default.Checklist,
-                            contentDescription = "批量管理",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isSelectionMode) "退出批量" else "批量管理", style = MaterialTheme.typography.labelMedium)
-                    }
-
-                    // Profile Avatar icon
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "👤",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        OutlinedButton(
+                            onClick = {
+                                aiPrefilledItem = null
+                                aiPrefilledImagePath = null
+                                showAddItemDialog = true
+                            },
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .height(42.dp)
+                                .testTag("home_manual_add_button"),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("手动录入", style = MaterialTheme.typography.labelMedium)
+                        }
                     }
                 }
             }
 
-            // 3-Card High Density Metric Grid
+            // AI 实时识别中状态卡片 (具备 5 秒倒计时感知与交互提示)
+            AnimatedVisibility(
+                visible = aiState is AiOperationState.Loading,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut() + slideOutVertically()
+            ) {
+                val loadingMsg = (aiState as? AiOperationState.Loading)?.message ?: "AI 正在识别中..."
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.5.dp,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "正在智能识图入库",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                text = loadingMsg,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.resetAiState() },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "取消", modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+            }
+
+            // 精简高效的 3 项水平胶囊统计条 (大幅降低纵向空间占用)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Metric 1: 全部物品
-                Card(
+                Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .height(82.dp)
                         .clickable { viewModel.clearAllFilters() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MetricPurpleBg)
+                    shape = RoundedCornerShape(8.dp),
+                    color = MetricPurpleBg
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "全部物品",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MetricPurpleLabel
-                        )
-                        Text(
-                            text = "${allItemsList.size}",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = MetricPurpleText
-                        )
+                        Text("全部", style = MaterialTheme.typography.labelSmall, color = MetricPurpleLabel, fontWeight = FontWeight.Bold)
+                        Text("${allItemsList.size}", style = MaterialTheme.typography.labelLarge, color = MetricPurpleText, fontWeight = FontWeight.Black)
                     }
                 }
 
-                // Metric 2: 临期预警
-                Card(
+                Surface(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(82.dp)
+                        .weight(1.1f)
                         .clickable { viewModel.toggleOnlyExpiringSoon() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MetricRedBg)
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (onlyExpiringSoon) MetricRedLabel.copy(alpha = 0.2f) else MetricRedBg
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "临期预警",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MetricRedLabel
-                        )
-                        Text(
-                            text = String.format(Locale.getDefault(), "%02d", expiringItems.size),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = MetricRedText
-                        )
+                        Text("临期预警", style = MaterialTheme.typography.labelSmall, color = MetricRedLabel, fontWeight = FontWeight.Bold)
+                        Text(String.format(Locale.getDefault(), "%02d", expiringItems.size), style = MaterialTheme.typography.labelLarge, color = MetricRedText, fontWeight = FontWeight.Black)
                     }
                 }
 
-                // Metric 3: 空间层级
-                Card(
+                Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .height(82.dp)
                         .clickable { viewModel.setSelectedCategory(null) },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MetricBlueBg)
+                    shape = RoundedCornerShape(8.dp),
+                    color = MetricBlueBg
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "空间层级",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MetricBlueLabel
-                        )
-                        Text(
-                            text = String.format(Locale.getDefault(), "%02d", containers.size),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = MetricBlueText
-                        )
+                        Text("空间箱", style = MaterialTheme.typography.labelSmall, color = MetricBlueLabel, fontWeight = FontWeight.Bold)
+                        Text(String.format(Locale.getDefault(), "%02d", containers.size), style = MaterialTheme.typography.labelLarge, color = MetricBlueText, fontWeight = FontWeight.Black)
                     }
                 }
             }
 
             // Search Bar & Filter Controls
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.setSearchQuery(it) },
@@ -823,12 +968,22 @@ fun InventoryScreen(
     // Add Item Dialog
     if (showAddItemDialog) {
         AddEditItemDialog(
-            initialItem = null,
+            initialItem = aiPrefilledItem,
+            prefilledImagePath = aiPrefilledImagePath,
             categories = categories,
             containers = containers,
             viewModel = viewModel,
-            onDismiss = { showAddItemDialog = false },
-            onSaved = { item -> viewModel.saveItem(item) }
+            onDismiss = {
+                showAddItemDialog = false
+                aiPrefilledItem = null
+                aiPrefilledImagePath = null
+            },
+            onSaved = { item ->
+                viewModel.saveItem(item)
+                showAddItemDialog = false
+                aiPrefilledItem = null
+                aiPrefilledImagePath = null
+            }
         )
     }
 

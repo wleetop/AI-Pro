@@ -1,0 +1,64 @@
+<!-- pages/item-detail/item-detail.wxml - 物品详情与出入库操作 -->
+<view class="container" wx:if="{{item}}">
+  <!-- 头部核心信息卡片 -->
+  <view class="card detail-header-card">
+    <view class="flex-between">
+      <view>
+        <text class="item-name text-bold">{{item.name}}</text>
+        <view style="margin-top: 8rpx;">
+          <text class="tag-badge tag-green">{{item.categoryName}}</text>
+          <text wx:if="{{item.brand}}" class="tag-badge">{{item.brand}}</text>
+          <text wx:if="{{item.spec}}" class="tag-badge">{{item.spec}}</text>
+        </view>
+      </view>
+      <view class="item-price-wrap" wx:if="{{item.price > 0}}">
+        <text class="price-val">¥{{item.price}}</text>
+        <text class="price-unit">/ {{item.unit || '个'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷出入库操作面板 -->
+  <view class="card">
+    <text class="text-bold" style="font-size: 28rpx; margin-bottom: 16rpx; display: block;">⚡ 快速库存调整</text>
+    <view class="flex-between qty-control-box">
+      <button class="qty-btn" bindtap="onAdjustQty" data-delta="{{-1}}">- 1</button>
+      <view class="qty-display">
+        <text class="qty-num text-bold">{{item.quantity}}</text>
+        <text class="qty-unit-label">{{item.unit || '个'}}</text>
+      </view>
+      <button class="qty-btn" bindtap="onAdjustQty" data-delta="{{1}}">+ 1</button>
+    </view>
+  </view>
+
+  <!-- 详细属性列表 -->
+  <view class="card">
+    <view class="attr-row flex-between">
+      <text class="attr-label">📍 收纳存放位置</text>
+      <text class="attr-value text-bold" style="color: #07C160;">{{item.locationPath || item.suggestedLocation || '未指定'}}</text>
+    </view>
+
+    <view class="attr-row flex-between" wx:if="{{item.barcode}}">
+      <text class="attr-label">🏷️ 条形码 / 资产码</text>
+      <text class="attr-value">{{item.barcode}}</text>
+    </view>
+
+    <view class="attr-row flex-between" wx:if="{{item.expireDate}}">
+      <text class="attr-label">📅 保质期到期日</text>
+      <text class="attr-value">{{item.expireDate}} ({{item.expiryStatus.text}})</text>
+    </view>
+
+    <view class="attr-row flex-between" wx:if="{{item.tags && item.tags.length > 0}}">
+      <text class="attr-label">🔖 标签</text>
+      <view class="flex-row" style="flex-wrap: wrap; justify-content: flex-end;">
+        <text wx:for="{{item.tags}}" wx:key="*this" class="tag-badge">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作按钮 -->
+  <view class="footer-btn-row flex-between">
+    <button class="btn-del" bindtap="onDeleteItem">🗑️ 删除</button>
+    <button class="btn-edit" bindtap="onEditItem">✏️ 编辑修改</button>
+  </view>
+</view>

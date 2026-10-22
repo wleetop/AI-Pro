@@ -1,0 +1,148 @@
+/* pages/ai-scan/ai-scan.wxss */
+.camera-box {
+  min-height: 380rpx;
+  background: #FFFFFF;
+  border: 3rpx dashed #07C160;
+  border-radius: 24rpx;
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+}
+
+.upload-placeholder {
+  flex-direction: column;
+  padding: 60rpx 40rpx;
+  text-align: center;
+}
+
+.camera-icon {
+  font-size: 72rpx;
+  margin-bottom: 16rpx;
+}
+
+.upload-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A202C;
+}
+
+.upload-sub {
+  font-size: 22rpx;
+  color: #718096;
+  margin-top: 8rpx;
+}
+
+.preview-img {
+  width: 100%;
+  height: 420rpx;
+}
+
+.current-model-tag {
+  font-size: 20rpx;
+  background: #E8F7EE;
+  color: #07C160;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+}
+
+.prompt-input {
+  width: 100%;
+  min-height: 100rpx;
+  font-size: 26rpx;
+  color: #2D3748;
+  line-height: 1.5;
+}
+
+.action-btn-group {
+  margin: 30rpx 0;
+}
+
+/* 结果卡片 */
+.results-section {
+  margin-top: 20rpx;
+}
+
+.results-header {
+  margin-bottom: 20rpx;
+}
+
+.btn-batch-save {
+  background: #07C160;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  font-weight: 600;
+  border-radius: 30rpx;
+  padding: 8rpx 24rpx;
+  margin: 0;
+}
+
+.result-item-card {
+  border-left: 8rpx solid #07C160;
+  margin-bottom: 20rpx;
+}
+
+.item-name-edit {
+  font-size: 32rpx;
+  color: #1A202C;
+  border-bottom: 1rpx dashed #E2E8F0;
+  padding: 4rpx 0;
+  max-width: 380rpx;
+}
+
+.qty-label {
+  font-size: 24rpx;
+  color: #718096;
+  margin-right: 6rpx;
+}
+
+.item-qty-input {
+  width: 80rpx;
+  text-align: center;
+  border-bottom: 1rpx solid #CBD5E0;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #07C160;
+}
+
+.qty-unit {
+  font-size: 24rpx;
+  color: #718096;
+  margin-left: 6rpx;
+}
+
+.picker-pill {
+  font-size: 24rpx;
+  background: #E8F7EE;
+  color: #07C160;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+  margin-right: 12rpx;
+}
+
+.loc-icon {
+  font-size: 24rpx;
+  color: #4A5568;
+}
+
+.location-input {
+  flex: 1;
+  font-size: 24rpx;
+  color: #2D3748;
+  border-bottom: 1rpx dashed #E2E8F0;
+  margin-left: 8rpx;
+}
+
+.card-footer-action {
+  margin-top: 18rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #F0F2F5;
+}
+
+.btn-single-save {
+  background: #E8F7EE;
+  color: #07C160;
+  font-size: 22rpx;
+  font-weight: 600;
+  border-radius: 20rpx;
+  margin: 0;
+}
